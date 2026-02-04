@@ -1,7 +1,6 @@
 # Product Requirements Document: YouTube Assistant
 
-**Product Manager:** Lakshya Kalra  
-**Date:** January 2026  
+**Created**: January 2026  
 **Status:** In Progress
 
 ---
@@ -29,17 +28,19 @@ YouTube Assistant helps power learners find high-quality educational videos with
 - Natural language query input that accepts topic descriptions
 - YouTube API integration to fetch video metadata for candidate videos
 - Ranking algorithm that scores videos based on available signals
-- Results display showing top N videos 
+- Results display showing top N videos
 - Simple, user friendly UI
+- Simple thumbs up/down feedback mechanism for each result to enable data gathering to improve recommendation model
+- Logging of user feedback against video metadata to build ML recommendation model in the future
 
 **Should-Have (P1)**
 
-- Simple thumbs up/down feedback mechanism for each result to enable data gathering to improve recommendation model 
-- Logging of user feedback against video metadata to build ML recommedation model in the future 
 - Video duration preferences to set minimum or maximum length
 - Query history to revisit past searches without re-entering them
 - Channel reputation scoring based on historical video quality
-- Voice to Text trascription to convert the videos watched into md files and saved into my Obsidian 
+- Voice to Text trascription to convert the videos watched into md files and saved into my Obsidian
+
+*See Future Work Tracker for iteration targeting and status of all P1 items.*
 
 ---
 

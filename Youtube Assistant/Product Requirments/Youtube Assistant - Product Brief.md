@@ -1,7 +1,6 @@
 # Product Brief: YouTube Assistant
 
-**Product Manager**: Lakshya Kalra  
-**Date**: January 2026  
+**Created**: January 2026  
 **Status**: Closed
 
 ---
