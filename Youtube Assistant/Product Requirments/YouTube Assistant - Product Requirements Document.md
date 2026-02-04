@@ -1,8 +1,7 @@
-# Product Spec: YouTube Assistant
+# Product Requirements Document: YouTube Assistant
 
 **Product Manager:** Lakshya Kalra  
 **Date:** January 2026  
---**Stage:** Product Spec 
 **Status:** In Progress
 
 ---

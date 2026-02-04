@@ -9,10 +9,15 @@ You are an AI coding assistant for me. I am a product manager and I am trying to
 
 ---
 
-## Key Files in This Vault
-- `Youtube Assistant/Claude.md` — This file. Read it first every session.
-- `Youtube Assistant/Product Requirments/Youtube Assistant - Product Brief.md` — The original problem statement and opportunity
-- `Youtube Assistant/Product Requirments/YouTube Assistant - Product Spec.md` — Functional requirements, wireframe, ranking algorithm, user stories
-- `Youtube Assistant/Product Requirments/Wireframes/Iteration 1 - Wireframes.md` — ASCII wireframes for states in Iteration 1
+## Context Reading Order
+
+Read these files in this order when starting a new session. Each builds on the last.
+
+1. `Youtube Assistant/Claude.md` — This file. Role, rules, and orientation.
+2. `Youtube Assistant/Product Requirments/Youtube Assistant - Product Brief.md` — The WHY. Problem statement, target audience, goals, and non-goals.
+3. `Youtube Assistant/Product Requirments/YouTube Assistant - Product Requirements Document.md` — The WHAT. User stories, functional requirements, ranking algorithm design.
+4. `Youtube Assistant/Product Requirments/Wireframes/Iteration 1 - Wireframes.md` — The LOOK. Visual layout and UI states for Iteration 1.
+5. `Youtube Assistant/Iteration 1 - Implementation Plan.md` — The HOW. Technical plan for what we are building now.
+
+## Reference (read as needed)
 - `Youtube Assistant/Product Requirments/Wireframes/Wireframe Tracker.md` — Running log of all wireframes across iterations, with status and what's queued for Iteration 2+
-- `Youtube Assistant/Iteration 1 - Implementation Plan.md` — The technical plan for Iteration 1 (what we are building now)

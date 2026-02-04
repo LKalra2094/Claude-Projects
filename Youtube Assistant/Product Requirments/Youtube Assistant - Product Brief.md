@@ -58,24 +58,3 @@ Power learners who use YouTube for self-education. Specifically, users who:
 | Building a consumer product | Personal tool; no need for scale, auth, or multi-user support |
 | Real-time recommendations | Batch analysis is fine; willing to wait a few seconds |
 | Mobile-first experience | simple web UI is sufficient |
-
----
-
-## User Experience
-
-**Step 1:** User describes the information or knowledge they are looking for  
-**Step 2:** Agent selects most relevant N videos and uses YouTube API to pull relevant data  
-**Step 3:** Agent ranks videos based on user need  
-**Step 4:** Agent returns top N results  
-**Step 5:** User selects video they want to watch and are redirected to the youtube page for that video
-**Step 6:** Agent collects feedback on results
-
----
-
-## Open Questions
-
-| Question | Next Steps |
-|----------|------------|
-| How do we rank videos? | Find data available via the Youtube API |
-| What will it cost? | Research on Claude and Youtube API costs and limits |
-| How long will the user have to wait? | How do we reduce latency? |

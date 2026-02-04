@@ -1,0 +1,11 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+
+# environment
+.env.local
+
+# local data
+Application/src/data/
