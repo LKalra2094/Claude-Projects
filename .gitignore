@@ -1,0 +1,4 @@
+node_modules/
+.next/
+.env.local
+Youtube Assistant/Application/src/data/
