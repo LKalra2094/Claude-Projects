@@ -9,3 +9,6 @@ node_modules/
 
 # local data
 Application/src/data/
+
+# local models
+Application/models/

@@ -19,8 +19,9 @@ Read these files in this order when starting a new session. Each builds on the l
 2. `Youtube Assistant/Product Requirments/Youtube Assistant - Product Brief.md` — The WHY. Problem statement, target audience, goals, and non-goals.
 3. `Youtube Assistant/Product Requirments/YouTube Assistant - Product Requirements Document.md` — The WHAT. User stories, functional requirements, ranking algorithm design.
 4. `Youtube Assistant/Product Requirments/Wireframes/Iteration 1 - Wireframes.md` — The LOOK. Visual layout and UI states for Iteration 1.
-5. `Youtube Assistant/Iteration 1 - Implementation Plan.md` — The HOW. Technical plan for what we are building now.
+5. `Youtube Assistant/Iteration 1 - Implementation Plan.md` — The HOW for Iteration 1. Closed.
+6. `Youtube Assistant/Iteration 2 - Implementation Plan.md` — The HOW for Iteration 2. Semantic search + Analytics tab.
 
 ## Reference (read as needed)
-- `Youtube Assistant/Future Work Tracker.md` — Backlog of all planned work beyond current iteration. What's next vs what's later.
+- `Youtube Assistant/Backlog.md` — Product backlog. Planned work beyond current iteration, with dependency chain and iteration targeting.
 - `Youtube Assistant/Product Requirments/Wireframes/Wireframe Tracker.md` — Running log of all wireframes across iterations, with status and what's queued for Iteration 2+

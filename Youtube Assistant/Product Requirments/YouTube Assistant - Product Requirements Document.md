@@ -40,7 +40,7 @@ YouTube Assistant helps power learners find high-quality educational videos with
 - Channel reputation scoring based on historical video quality
 - Voice to Text trascription to convert the videos watched into md files and saved into my Obsidian
 
-*See Future Work Tracker for iteration targeting and status of all P1 items.*
+*See Backlog for iteration targeting and status of all P1 items.*
 
 ---
 
