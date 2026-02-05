@@ -13,6 +13,8 @@ Concise summary of the change. No period at the end.
 **Body (optional):** Blank line after subject, then details.
 Each line max 18 tokens. Use bullet points.
 
+**No Co-Authored-By line.** Do not append attribution footers to commits.
+
 ### Example
 ```
 Add auth and session management
