@@ -13,15 +13,19 @@ const MODEL_CACHE_DIR = join(process.cwd(), 'models', 'Semantic_Search_Model');
  */
 async function getEmbeddingPipeline(): Promise<FeatureExtractionPipeline> {
   if (embeddingPipeline) {
+    console.log('[embeddings] Using cached model');
     return embeddingPipeline;
   }
 
-  console.log('Loading embedding model...');
+  console.log(`[embeddings] MODEL_CACHE_DIR: ${MODEL_CACHE_DIR}`);
+  console.log('[embeddings] Loading embedding model...');
+  console.time('[embeddings] model-load');
   embeddingPipeline = await pipeline('feature-extraction', MODEL_NAME, {
     cache_dir: MODEL_CACHE_DIR,
     local_files_only: true,
   });
-  console.log('Embedding model loaded.');
+  console.timeEnd('[embeddings] model-load');
+  console.log('[embeddings] Model loaded successfully');
 
   return embeddingPipeline;
 }
@@ -44,7 +48,11 @@ export async function encodeTexts(texts: string[]): Promise<number[][]> {
   const pipe = await getEmbeddingPipeline();
   const embeddings: number[][] = [];
 
-  for (const text of texts) {
+  console.log(`[embeddings] Encoding ${texts.length} descriptions...`);
+  console.time('[embeddings] encode-descriptions');
+
+  for (let i = 0; i < texts.length; i++) {
+    const text = texts[i];
     if (!text || text.trim().length === 0) {
       // Empty text gets zero vector
       embeddings.push([]);
@@ -52,8 +60,12 @@ export async function encodeTexts(texts: string[]): Promise<number[][]> {
       const output = await pipe(text, { pooling: 'mean', normalize: true });
       embeddings.push(Array.from(output.data as Float32Array));
     }
+    if (i === 0) {
+      console.log('[embeddings] First description encoded successfully');
+    }
   }
 
+  console.timeEnd('[embeddings] encode-descriptions');
   return embeddings;
 }
 
