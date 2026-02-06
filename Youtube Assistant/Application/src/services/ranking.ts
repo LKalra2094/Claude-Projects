@@ -6,17 +6,7 @@ import {
   RankedVideo,
 } from '@/types';
 import { parseDuration } from './youtube';
-
-// Stopwords to remove from query and description for overlap calculation
-const STOPWORDS = new Set([
-  'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-  'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
-  'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-  'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these',
-  'those', 'it', 'its', 'as', 'if', 'when', 'where', 'why', 'how',
-  'what', 'which', 'who', 'whom', 'i', 'you', 'he', 'she', 'we', 'they',
-  'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'our', 'their',
-]);
+import { calculateSemanticSimilarities } from './embeddings';
 
 const WEIGHTS = {
   commentDensity: 0.20,
@@ -51,31 +41,6 @@ export function filterCandidates(videos: YouTubeVideoDetails[]): YouTubeVideoDet
 }
 
 /**
- * Tokenize text: lowercase, split on non-alphanumeric, remove stopwords.
- */
-function tokenize(text: string): Set<string> {
-  const words = text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-  return new Set(words.filter((word) => !STOPWORDS.has(word) && word.length > 1));
-}
-
-/**
- * Calculate query-description overlap: |intersection| / |queryTokens|
- */
-function calculateOverlap(query: string, description: string): number {
-  const queryTokens = tokenize(query);
-  const descTokens = tokenize(description);
-
-  if (queryTokens.size === 0) return 0;
-
-  let intersectionCount = 0;
-  for (const token of queryTokens) {
-    if (descTokens.has(token)) intersectionCount++;
-  }
-
-  return intersectionCount / queryTokens.size;
-}
-
-/**
  * Calculate days since a date.
  */
 function daysSince(isoDate: string): number {
@@ -87,11 +52,12 @@ function daysSince(isoDate: string): number {
 
 /**
  * Extract raw signals from video and channel data.
+ * semanticSimilarity is pre-computed via embedding model.
  */
 export function extractRawSignals(
   video: YouTubeVideoDetails,
   channel: YouTubeChannelDetails | undefined,
-  query: string
+  semanticSimilarity: number
 ): RawSignals {
   const viewCount = Math.max(parseInt(video.statistics.viewCount || '0', 10), 1);
   const commentCount = parseInt(video.statistics.commentCount || '0', 10);
@@ -102,7 +68,7 @@ export function extractRawSignals(
   return {
     commentDensity: commentCount / viewCount,
     subscriberCount,
-    queryDescriptionOverlap: calculateOverlap(query, video.snippet.description),
+    queryDescriptionOverlap: semanticSimilarity,
     viewCount,
     freshness: daysSince(video.snippet.publishedAt),
   };
@@ -163,24 +129,33 @@ export function calculateCompositeScore(normalized: NormalizedSignals): number {
 
 /**
  * Main ranking function: takes filtered videos + channel data, returns ranked results.
+ * Now async to support semantic similarity computation via embedding model.
  */
-export function rankVideos(
+export async function rankVideos(
   videos: YouTubeVideoDetails[],
   channelMap: Map<string, YouTubeChannelDetails>,
   query: string
-): RankedVideo[] {
-  // Step 1: Extract raw signals for all videos
-  const videosWithRawSignals = videos.map((video) => ({
+): Promise<RankedVideo[]> {
+  // Step 1: Compute semantic similarities for all video descriptions in one batch
+  const descriptions = videos.map((video) => video.snippet.description);
+  const similarities = await calculateSemanticSimilarities(query, descriptions);
+
+  // Step 2: Extract raw signals for all videos (using pre-computed similarities)
+  const videosWithRawSignals = videos.map((video, index) => ({
     video,
-    rawSignals: extractRawSignals(video, channelMap.get(video.snippet.channelId), query),
+    rawSignals: extractRawSignals(
+      video,
+      channelMap.get(video.snippet.channelId),
+      similarities[index]
+    ),
   }));
 
-  // Step 2: Calculate min/max comment density for batch normalization
+  // Step 3: Calculate min/max comment density for batch normalization
   const commentDensities = videosWithRawSignals.map((v) => v.rawSignals.commentDensity);
   const minCommentDensity = Math.min(...commentDensities);
   const maxCommentDensity = Math.max(...commentDensities);
 
-  // Step 3: Normalize and score
+  // Step 4: Normalize and score
   const rankedVideos: RankedVideo[] = videosWithRawSignals.map(({ video, rawSignals }) => {
     const normalizedSignals = normalizeSignals(rawSignals, minCommentDensity, maxCommentDensity);
     const compositeScore = calculateCompositeScore(normalizedSignals);
@@ -205,7 +180,7 @@ export function rankVideos(
     };
   });
 
-  // Step 4: Sort by composite score descending
+  // Step 5: Sort by composite score descending
   rankedVideos.sort((a, b) => b.compositeScore - a.compositeScore);
 
   return rankedVideos;

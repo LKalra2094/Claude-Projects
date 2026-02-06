@@ -8,9 +8,13 @@
   --background: #fafafa;
   --foreground: #171717;
   --card-background: #ffffff;
+  --card-bg: #ffffff;
   --card-border: #e5e5e5;
+  --border: #e5e5e5;
   --primary: #dc2626;
   --primary-hover: #b91c1c;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
   --text-muted: #737373;
   --text-secondary: #525252;
   --success: #16a34a;

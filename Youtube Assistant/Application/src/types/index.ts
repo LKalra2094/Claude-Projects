@@ -167,3 +167,34 @@ export interface QuotaResponse {
   dailyLimit: number;
   percentUsed: number;
 }
+
+// ============================================
+// Analytics Types
+// ============================================
+
+export type AnalyticsPeriod = '7d' | '30d' | '90d' | 'all';
+
+export interface AnalyticsSummary {
+  searchesPerDay: number;
+  nullSearchPercent: number;
+  thumbsUpPerSearch: number;
+  thumbsDownPerSearch: number;
+  clicksPerSearch: number;
+  apiUnitsPerDay: number;
+}
+
+export interface TimeSeriesDataPoint {
+  date: string; // YYYY-MM-DD
+  searches: number;
+  nullSearchPercent: number;
+  thumbsUpPerSearch: number;
+  thumbsDownPerSearch: number;
+  clicksPerSearch: number;
+  apiUnits: number;
+}
+
+export interface AnalyticsResponse {
+  period: AnalyticsPeriod;
+  summary: AnalyticsSummary;
+  timeSeries: TimeSeriesDataPoint[];
+}

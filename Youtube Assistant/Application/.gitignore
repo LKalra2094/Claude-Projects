@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+
+# Environment variables
+.env.local
+.env*.local
+
+# Local data storage
+src/data/
+
+# Embedding models (large binary files)
+models/
+
+# Misc
+.DS_Store
+*.log

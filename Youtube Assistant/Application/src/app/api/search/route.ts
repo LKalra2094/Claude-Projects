@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
       channelMap.set(channel.id, channel);
     });
 
-    // Step 5: Rank videos
-    const rankedVideos = rankVideos(filteredVideos, channelMap, query.trim());
+    // Step 5: Rank videos (async for semantic similarity computation)
+    const rankedVideos = await rankVideos(filteredVideos, channelMap, query.trim());
 
     // Step 6: Generate query ID and save to storage
     const queryId = generateQueryId();

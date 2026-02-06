@@ -25,3 +25,7 @@ Running backlog of all planned work beyond Iteration 1. Update **Status** as ite
 | 14 | Analytics error states | Error Handling | Pending | Analytics tab | No handling for corrupted storage.json or analytics computation failures. Define error state for the Analytics tab. |
 | 15 | Analytics tab state persistence | UX | Pending | Analytics tab | Time period selection resets when switching between Search and Analytics tabs. Persist selected period across navigation. |
 | 16 | Embedding failure error UX | Error Handling | Pending | Iteration 2 semantic search | Model loaded but encoding throws mid-search. Currently fails search and returns to empty state. Add user-friendly error message explaining what happened. |
+| 17 | Clicks per non-null searches metric | Analytics | Pending | Analytics tab | Current metric shows avg clicks per search including null searches (no clicks). Change to only count non-null searches in the denominator for more meaningful metric. |
+| 18 | Semantic search on title + description | Ranking | Pending | Iteration 2 semantic search | Currently only embeds video description. Concatenate title and description before encoding to improve relevance matching. |
+| 19 | 5 videos per row layout | UX | Pending | None | Current layout shows 2 videos per row. Change to 5 videos per row for denser information display. |
+| 20 | Define total results display limit | UX | Pending | None | No defined rule for how many total videos to show after scrolling. Define cutoff (e.g., top 20, top 30) or implement pagination/infinite scroll pattern. |
