@@ -4,18 +4,11 @@ import {
   RawSignals,
   NormalizedSignals,
   RankedVideo,
+  WeightSet,
 } from '@/types';
 import { parseDuration } from './youtube';
 import { calculateSemanticSimilarities } from './embeddings';
-
-const WEIGHTS = {
-  commentDensity: 0.14,
-  subscriberCount: 0.14,
-  queryDescriptionOverlap: 0.25,
-  viewCount: 0.14,
-  freshness: 0.08,
-  youtubeRank: 0.25,
-};
+import { getActiveWeights, DEFAULT_WEIGHTS } from './weightStorage';
 
 // Constants for log normalization
 const MAX_SUBSCRIBER_COUNT = 50_000_000; // 50M
@@ -128,14 +121,14 @@ export function normalizeSignals(
 /**
  * Calculate composite score from normalized signals.
  */
-export function calculateCompositeScore(normalized: NormalizedSignals): number {
+export function calculateCompositeScore(normalized: NormalizedSignals, weights: WeightSet): number {
   return (
-    normalized.commentDensity * WEIGHTS.commentDensity +
-    normalized.subscriberCount * WEIGHTS.subscriberCount +
-    normalized.queryDescriptionOverlap * WEIGHTS.queryDescriptionOverlap +
-    normalized.viewCount * WEIGHTS.viewCount +
-    normalized.freshness * WEIGHTS.freshness +
-    normalized.youtubeRank * WEIGHTS.youtubeRank
+    normalized.commentDensity * weights.commentDensity +
+    normalized.subscriberCount * weights.subscriberCount +
+    normalized.queryDescriptionOverlap * weights.queryDescriptionOverlap +
+    normalized.viewCount * weights.viewCount +
+    normalized.freshness * weights.freshness +
+    normalized.youtubeRank * weights.youtubeRank
   );
 }
 
@@ -149,6 +142,10 @@ export async function rankVideos(
   query: string,
   youtubeRankMap: Map<string, number>
 ): Promise<RankedVideo[]> {
+  // Step 0: Load weights (learned or default)
+  const activeRecord = await getActiveWeights();
+  const weights: WeightSet = activeRecord ? activeRecord.weights : DEFAULT_WEIGHTS;
+
   // Step 1: Compute semantic similarities using title + description + tags
   const descriptions = videos.map((video) =>
     [
@@ -181,7 +178,7 @@ export async function rankVideos(
   const totalCandidates = videos.length;
   const rankedVideos: RankedVideo[] = videosWithRawSignals.map(({ video, rawSignals }) => {
     const normalizedSignals = normalizeSignals(rawSignals, minCommentDensity, maxCommentDensity, totalCandidates);
-    const compositeScore = calculateCompositeScore(normalizedSignals);
+    const compositeScore = calculateCompositeScore(normalizedSignals, weights);
 
     return {
       videoId: video.id,
