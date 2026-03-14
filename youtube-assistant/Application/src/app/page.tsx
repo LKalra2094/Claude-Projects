@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { RankedVideo, SearchResponse, AnalyticsPeriod } from '@/types';
 import QueryZone from '@/components/QueryZone';
@@ -10,9 +10,21 @@ import ErrorState from '@/components/ErrorState';
 import StatusFooter from '@/components/StatusFooter';
 import AnalyticsTab from '@/components/AnalyticsTab';
 import AdminTab from '@/components/AdminTab';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type AppState = 'idle' | 'loading' | 'results' | 'no-results' | 'error';
 type ActiveTab = 'search' | 'analytics' | 'admin';
+type ThemePreference = 'system' | 'light' | 'dark';
+
+function getEffectiveTheme(preference: ThemePreference): 'light' | 'dark' {
+  if (preference === 'system') {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  }
+  return preference;
+}
 
 export default function Home() {
   const { data: session } = useSession();
@@ -27,6 +39,47 @@ export default function Home() {
   const [feedbackMap, setFeedbackMap] = useState<{ [videoId: string]: 'thumbs_up' | 'thumbs_down' | 'none' }>({});
   const [toast, setToast] = useState<string | null>(null);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>('7d');
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
+  // Theme state
+  const [theme, setTheme] = useState<ThemePreference>('system');
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');
+
+  // Initialize theme from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('theme') as ThemePreference | null;
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      setTheme(stored);
+    }
+  }, []);
+
+  // Apply theme changes and listen for system preference changes
+  useEffect(() => {
+    const effective = getEffectiveTheme(theme);
+    setEffectiveTheme(effective);
+    document.documentElement.dataset.theme = effective;
+    localStorage.setItem('theme', theme);
+
+    // Listen for OS preference changes when in system mode
+    if (theme === 'system') {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = (e: MediaQueryListEvent) => {
+        const newTheme = e.matches ? 'dark' : 'light';
+        setEffectiveTheme(newTheme);
+        document.documentElement.dataset.theme = newTheme;
+      };
+      mq.addEventListener('change', handler);
+      return () => mq.removeEventListener('change', handler);
+    }
+  }, [theme]);
+
+  const cycleTheme = () => {
+    setTheme((prev) => {
+      if (prev === 'system') return 'light';
+      if (prev === 'light') return 'dark';
+      return 'system';
+    });
+  };
 
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
@@ -177,6 +230,19 @@ export default function Home() {
       {/* User info in header */}
       {session?.user && (
         <div style={styles.userInfo}>
+          {/* Theme toggle */}
+          <button
+            style={styles.themeToggle}
+            onClick={cycleTheme}
+            aria-label={`Theme: ${theme}`}
+            title={`Theme: ${theme}`}
+          >
+            <span style={styles.themeIcon}>
+              {effectiveTheme === 'light' ? '\u{1F319}' : '\u{2600}\u{FE0F}'}
+            </span>
+            {theme === 'system' && <span style={styles.themeAutoLabel}>auto</span>}
+          </button>
+
           {session.user.image && (
             <img
               src={session.user.image}
@@ -186,7 +252,7 @@ export default function Home() {
             />
           )}
           <span style={styles.userName}>{session.user.name}</span>
-          <button style={styles.signOutBtn} onClick={() => signOut()}>
+          <button style={styles.signOutBtn} onClick={() => setShowSignOutConfirm(true)}>
             Sign out
           </button>
         </div>
@@ -238,6 +304,17 @@ export default function Home() {
       {activeTab === 'admin' && isAdmin && <AdminTab />}
 
       {toast && <div className="toast">{toast}</div>}
+
+      <ConfirmDialog
+        open={showSignOutConfirm}
+        title="Sign out?"
+        message="Are you sure you want to sign out?"
+        confirmLabel="Sign out"
+        cancelLabel="Cancel"
+        onConfirm={() => signOut()}
+        onCancel={() => setShowSignOutConfirm(false)}
+        confirmVariant="danger"
+      />
     </main>
   );
 }
@@ -316,6 +393,32 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     gap: '8px',
     zIndex: 100,
+  },
+  themeToggle: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '28px',
+    height: '28px',
+    backgroundColor: 'transparent',
+    border: '1px solid rgba(128,128,128,0.3)',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    padding: 0,
+    position: 'relative',
+  },
+  themeIcon: {
+    fontSize: '14px',
+    lineHeight: 1,
+  },
+  themeAutoLabel: {
+    position: 'absolute',
+    bottom: '-12px',
+    fontSize: '8px',
+    color: 'var(--text-muted)',
+    fontWeight: 500,
+    letterSpacing: '0.5px',
   },
   avatar: {
     width: '32px',
