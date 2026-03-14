@@ -25,6 +25,8 @@ Read these files in this order when starting a new session. Each builds on the l
 - `youtube-assistant/Iteration 2 - Implementation Plan.md` — Closed. Semantic search + Analytics tab.
 - `youtube-assistant/Iteration 3 - Implementation Plan.md` — Closed. Neon DB + Cohere embeddings + Vercel deploy.
 - `youtube-assistant/Iteration 4 - Implementation Plan.md` — Closed. YouTube rank signal + weight rebalancing.
+- `youtube-assistant/Iteration 5 - Implementation Plan.md` — Closed. Adaptive ranking weights (ML from feedback).
+- `youtube-assistant/Iteration 6 - Implementation Plan.md` — Closed. UI polish (5-per-row, result limit, analytics state).
 
 ## Reference (read as needed)
 - `youtube-assistant/Backlog.md` — Prioritized planned work. Items move to Changelog when done.

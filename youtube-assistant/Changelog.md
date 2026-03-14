@@ -5,6 +5,21 @@
 
 ---
 
+## Iteration 6 — UI Polish (March 2026)
+
+- Display 5 videos per row on desktop (3 tablet, 1 mobile) with responsive grid
+- Limit search results to top 20
+- Persist analytics time period selection across tab switches
+
+## Iteration 5 — Adaptive Ranking Weights (March 2026)
+
+- Add ML-based weight learning via logistic regression (TypeScript, no external libraries)
+- Store normalized signals in feedback table for training data
+- Create ranking_weights table for learned weight persistence
+- New Admin tab: weight visualization, training stats, dry-run preview, revert to defaults
+- API endpoints for weight retrieval and model training
+- Safeguards: 30-sample minimum, validation holdout, weight bounds [0.03, 0.50]
+
 ## Iteration 4 — Ranking Improvements (March 2026)
 
 - Add YouTube's native relevance ranking as a new signal (25% weight)
