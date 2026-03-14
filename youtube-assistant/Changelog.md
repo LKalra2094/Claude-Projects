@@ -5,6 +5,17 @@
 
 ---
 
+## Iteration 8 — Dark Mode, Sign-out Confirmation, Admin Analytics (March 2026)
+
+- Add dark mode with system/light/dark toggle via CSS variable overrides
+- Blocking inline script prevents flash of wrong theme on page load
+- Sign-out confirmation dialog prevents accidental sign-outs
+- New admin per-user analytics table showing searches, clicks, and feedback per user
+- New /api/admin/user-stats endpoint with parallel DB queries
+- Sign-in page respects dark mode (CSS variables replace hardcoded colors)
+- Skeleton loading animation uses CSS variables for dark mode compatibility
+- Backlog items #23 (dark mode), #24 (sign-out confirmation), #25 (admin analytics) resolved
+
 ## Iteration 7 — Authentication & Per-User Data (March 2026)
 
 - Add Google sign-in via Auth.js v5 (NextAuth) with JWT sessions

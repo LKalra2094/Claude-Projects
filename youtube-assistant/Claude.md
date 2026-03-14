@@ -37,6 +37,7 @@ Before ending a session, update `youtube-assistant/Session Status.md` with:
 - `youtube-assistant/Iteration 5 - Implementation Plan.md` — Closed. Adaptive ranking weights (ML from feedback).
 - `youtube-assistant/Iteration 6 - Implementation Plan.md` — Closed. UI polish (5-per-row, result limit, analytics state).
 - `youtube-assistant/Iteration 7 - Implementation Plan.md` — Closed. Auth (Google OAuth) + per-user data partitioning.
+- `youtube-assistant/Iteration 8 - Implementation Plan.md` — Closed. Dark mode, sign-out confirmation, admin per-user analytics.
 
 ## Reference (read as needed)
 - `youtube-assistant/Backlog.md` — Prioritized planned work. Items move to Changelog when done.

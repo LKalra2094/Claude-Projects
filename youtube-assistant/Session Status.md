@@ -6,23 +6,24 @@
 
 ## Where We Left Off
 
-Iteration 7 (Authentication & Per-User Data) shipped via PR #4. Merged to main.
+Iteration 8 (Dark Mode, Sign-out Confirmation, Admin Analytics) shipped via PR #5. Merged to main.
 
 ### What Was Done
-- Full Auth.js v5 implementation with Google OAuth, JWT sessions, Edge-compatible middleware
-- Per-user data partitioning across all tables (query_history, feedback, click_events, ranking_weights)
-- DB migration (migrate-v3.js) run against Neon — users table created, user_id columns added
-- Admin role via ADMIN_EMAIL env var — admin sees Admin tab with user picker
-- Sign-in page, header with avatar/name/sign-out, role-based tab visibility
-- Tested admin and non-admin flows on Vercel preview
-- Added backlog items #24 (sign-out confirmation) and #25 (admin per-user analytics)
+- Dark mode with system/light/dark toggle — CSS variable overrides, blocking script for flash prevention
+- Sign-out confirmation dialog — generic ConfirmDialog component, wired to sign-out button
+- Admin per-user analytics — new /api/admin/user-stats endpoint, User Activity table in AdminTab
+- Sign-in page updated to use CSS variables instead of hardcoded colors
+- Skeleton loading animation updated for dark mode compatibility
+- Tested all three features on Vercel preview
 
 ### Next Steps
 
-1. Pick next iteration from Backlog.md (candidates: #24 sign-out confirmation, #25 admin analytics, #23 dark mode)
+1. Pick next iteration from Backlog.md
 2. Write implementation plan, get approval, build
 
 ### Key Decisions Made
-- Edge middleware checks session token cookie directly (no Node.js imports) to avoid runtime errors
-- Admin determined by ADMIN_EMAIL env var comparison in JWT callback
-- Double cast through `unknown` for isAdmin on session.user (TypeScript limitation)
+- Theme preference stored in localStorage with three states: system, light, dark
+- Blocking inline script in <head> reads localStorage before paint to prevent flash
+- CSS uses both [data-theme="dark"] and @media (prefers-color-scheme: dark) fallback
+- quota_log has no user_id column — API units omitted from admin analytics for now
+- ConfirmDialog built as generic reusable component (not sign-out-specific)
