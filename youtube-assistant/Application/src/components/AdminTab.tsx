@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { WeightSet, WeightRecord } from '@/types';
 
 const SIGNAL_LABELS: Record<keyof WeightSet, string> = {
@@ -13,6 +14,13 @@ const SIGNAL_LABELS: Record<keyof WeightSet, string> = {
 };
 
 const SIGNAL_KEYS = Object.keys(SIGNAL_LABELS) as (keyof WeightSet)[];
+
+interface UserInfo {
+  email: string;
+  name: string;
+  image: string;
+  createdAt: string;
+}
 
 interface WeightsData {
   source: 'learned' | 'default';
@@ -42,6 +50,9 @@ interface TrainResponse {
 }
 
 export default function AdminTab() {
+  const { data: session } = useSession();
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>('');
   const [data, setData] = useState<WeightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [training, setTraining] = useState(false);
@@ -54,10 +65,30 @@ export default function AdminTab() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchWeights = useCallback(async () => {
+  // Fetch users list
+  useEffect(() => {
+    async function loadUsers() {
+      try {
+        const res = await fetch('/api/users');
+        if (!res.ok) return;
+        const result = await res.json();
+        setUsers(result.users);
+        // Default to admin's own email
+        if (session?.user?.email && result.users.length > 0) {
+          setSelectedUser(session.user.email);
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    loadUsers();
+  }, [session?.user?.email]);
+
+  const fetchWeights = useCallback(async (userId: string) => {
+    if (!userId) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/weights');
+      const res = await fetch(`/api/weights?userId=${encodeURIComponent(userId)}`);
       if (!res.ok) throw new Error('Failed to fetch weights');
       const result: WeightsData = await res.json();
       setData(result);
@@ -69,7 +100,12 @@ export default function AdminTab() {
     }
   }, []);
 
-  useEffect(() => { fetchWeights(); }, [fetchWeights]);
+  useEffect(() => {
+    if (selectedUser) {
+      setTrainResult(null);
+      fetchWeights(selectedUser);
+    }
+  }, [selectedUser, fetchWeights]);
 
   const handleDryRun = async () => {
     setTraining(true);
@@ -78,7 +114,7 @@ export default function AdminTab() {
       const res = await fetch('/api/weights/train', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun: true }),
+        body: JSON.stringify({ dryRun: true, userId: selectedUser }),
       });
       const result: TrainResponse = await res.json();
       if (!res.ok) {
@@ -99,7 +135,7 @@ export default function AdminTab() {
       const res = await fetch('/api/weights/train', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun: false }),
+        body: JSON.stringify({ dryRun: false, userId: selectedUser }),
       });
       const result: TrainResponse = await res.json();
       if (!res.ok) {
@@ -107,7 +143,7 @@ export default function AdminTab() {
       } else {
         showToast('Weights activated');
         setTrainResult(null);
-        await fetchWeights();
+        await fetchWeights(selectedUser);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Activation failed');
@@ -121,31 +157,22 @@ export default function AdminTab() {
       const res = await fetch('/api/weights/train', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'revert' }),
+        body: JSON.stringify({ action: 'revert', userId: selectedUser }),
       });
       if (!res.ok) throw new Error('Revert failed');
       showToast('Reverted to defaults');
       setTrainResult(null);
-      await fetchWeights();
+      await fetchWeights(selectedUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Revert failed');
     }
   };
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div style={styles.container}>
         <h2 style={styles.title}>Admin</h2>
-        <p style={styles.muted}>Loading weights...</p>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div style={styles.container}>
-        <h2 style={styles.title}>Admin</h2>
-        <p style={styles.errorText}>{error || 'Failed to load'}</p>
+        <p style={styles.muted}>Loading...</p>
       </div>
     );
   }
@@ -154,6 +181,24 @@ export default function AdminTab() {
     <div style={styles.container}>
       <h2 style={styles.title}>Admin</h2>
 
+      {/* User Picker */}
+      {users.length > 0 && (
+        <div style={styles.card}>
+          <h3 style={styles.cardTitle}>Select User</h3>
+          <select
+            style={styles.select}
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+          >
+            {users.map((u) => (
+              <option key={u.email} value={u.email}>
+                {u.name || u.email} ({u.email})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {error && (
         <div style={styles.errorBanner}>
           <span>{error}</span>
@@ -161,117 +206,121 @@ export default function AdminTab() {
         </div>
       )}
 
-      {/* Current Weights */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>
-          Current Weights
-          <span style={styles.badge}>{data.source}</span>
-        </h3>
-        <WeightBars weights={data.weights} defaultWeights={data.defaultWeights} />
-        {data.source === 'learned' && data.activeRecord && (
-          <div style={styles.meta}>
-            <span>Trained on {data.activeRecord.trainingCount} samples</span>
-            <span>Accuracy: {(data.activeRecord.validationAcc * 100).toFixed(1)}%</span>
-            <span>Activated: {new Date(data.activeRecord.createdAt).toLocaleDateString()}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Training Data Stats */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Training Data</h3>
-        <div style={styles.statsRow}>
-          <StatBox label="Total Feedback" value={data.dataStats.total} />
-          <StatBox label="Thumbs Up" value={data.dataStats.thumbsUp} />
-          <StatBox label="Thumbs Down" value={data.dataStats.thumbsDown} />
-          <StatBox label="Needed" value={Math.max(0, 30 - data.dataStats.total)} />
-        </div>
-        {data.dataStats.total < 30 && (
-          <p style={styles.hint}>
-            Need {30 - data.dataStats.total} more feedback events before training (min 5 of each type).
-          </p>
-        )}
-      </div>
-
-      {/* Train Controls */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Train Model</h3>
-        <div style={styles.buttonRow}>
-          <button
-            style={styles.primaryBtn}
-            onClick={handleDryRun}
-            disabled={training}
-          >
-            {training ? 'Training...' : 'Preview New Weights'}
-          </button>
-          {data.source === 'learned' && (
-            <button style={styles.secondaryBtn} onClick={handleRevert}>
-              Revert to Defaults
-            </button>
-          )}
-        </div>
-
-        {/* Dry-run results */}
-        {trainResult && trainResult.dryRun && trainResult.proposed && (
-          <div style={styles.previewBox}>
-            <h4 style={styles.previewTitle}>Proposed Weights</h4>
-            <WeightBars
-              weights={trainResult.proposed}
-              defaultWeights={data.defaultWeights}
-            />
-            <div style={styles.meta}>
-              <span>Validation: {((trainResult.validationAcc || 0) * 100).toFixed(1)}%</span>
-              <span>Samples: {trainResult.totalSamples}</span>
-              <span>Epochs: {trainResult.epochs}</span>
-              <span>{trainResult.passedValidation ? 'Passed' : 'Failed'} validation</span>
-            </div>
-            {trainResult.passedValidation && (
-              <button
-                style={styles.activateBtn}
-                onClick={handleActivate}
-                disabled={training}
-              >
-                {training ? 'Activating...' : 'Activate These Weights'}
-              </button>
+      {data && (
+        <>
+          {/* Current Weights */}
+          <div style={styles.card}>
+            <h3 style={styles.cardTitle}>
+              Current Weights
+              <span style={styles.badge}>{data.source}</span>
+            </h3>
+            <WeightBars weights={data.weights} defaultWeights={data.defaultWeights} />
+            {data.source === 'learned' && data.activeRecord && (
+              <div style={styles.meta}>
+                <span>Trained on {data.activeRecord.trainingCount} samples</span>
+                <span>Accuracy: {(data.activeRecord.validationAcc * 100).toFixed(1)}%</span>
+                <span>Activated: {new Date(data.activeRecord.createdAt).toLocaleDateString()}</span>
+              </div>
             )}
-            {!trainResult.passedValidation && (
+          </div>
+
+          {/* Training Data Stats */}
+          <div style={styles.card}>
+            <h3 style={styles.cardTitle}>Training Data</h3>
+            <div style={styles.statsRow}>
+              <StatBox label="Total Feedback" value={data.dataStats.total} />
+              <StatBox label="Thumbs Up" value={data.dataStats.thumbsUp} />
+              <StatBox label="Thumbs Down" value={data.dataStats.thumbsDown} />
+              <StatBox label="Needed" value={Math.max(0, 30 - data.dataStats.total)} />
+            </div>
+            {data.dataStats.total < 30 && (
               <p style={styles.hint}>
-                Validation accuracy below 65%. Cannot activate. Collect more feedback data.
+                Need {30 - data.dataStats.total} more feedback events before training (min 5 of each type).
               </p>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Weight History */}
-      {data.history.length > 0 && (
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Weight History</h3>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Date</th>
-                <th style={styles.th}>Samples</th>
-                <th style={styles.th}>Accuracy</th>
-                <th style={styles.th}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.history.map((record) => (
-                <tr key={record.id}>
-                  <td style={styles.td}>{new Date(record.createdAt).toLocaleDateString()}</td>
-                  <td style={styles.td}>{record.trainingCount}</td>
-                  <td style={styles.td}>{(record.validationAcc * 100).toFixed(1)}%</td>
-                  <td style={styles.td}>
-                    <span style={record.isActive ? styles.activeBadge : styles.inactiveBadge}>
-                      {record.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          {/* Train Controls */}
+          <div style={styles.card}>
+            <h3 style={styles.cardTitle}>Train Model</h3>
+            <div style={styles.buttonRow}>
+              <button
+                style={styles.primaryBtn}
+                onClick={handleDryRun}
+                disabled={training}
+              >
+                {training ? 'Training...' : 'Preview New Weights'}
+              </button>
+              {data.source === 'learned' && (
+                <button style={styles.secondaryBtn} onClick={handleRevert}>
+                  Revert to Defaults
+                </button>
+              )}
+            </div>
+
+            {/* Dry-run results */}
+            {trainResult && trainResult.dryRun && trainResult.proposed && (
+              <div style={styles.previewBox}>
+                <h4 style={styles.previewTitle}>Proposed Weights</h4>
+                <WeightBars
+                  weights={trainResult.proposed}
+                  defaultWeights={data.defaultWeights}
+                />
+                <div style={styles.meta}>
+                  <span>Validation: {((trainResult.validationAcc || 0) * 100).toFixed(1)}%</span>
+                  <span>Samples: {trainResult.totalSamples}</span>
+                  <span>Epochs: {trainResult.epochs}</span>
+                  <span>{trainResult.passedValidation ? 'Passed' : 'Failed'} validation</span>
+                </div>
+                {trainResult.passedValidation && (
+                  <button
+                    style={styles.activateBtn}
+                    onClick={handleActivate}
+                    disabled={training}
+                  >
+                    {training ? 'Activating...' : 'Activate These Weights'}
+                  </button>
+                )}
+                {!trainResult.passedValidation && (
+                  <p style={styles.hint}>
+                    Validation accuracy below 65%. Cannot activate. Collect more feedback data.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Weight History */}
+          {data.history.length > 0 && (
+            <div style={styles.card}>
+              <h3 style={styles.cardTitle}>Weight History</h3>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Date</th>
+                    <th style={styles.th}>Samples</th>
+                    <th style={styles.th}>Accuracy</th>
+                    <th style={styles.th}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.history.map((record) => (
+                    <tr key={record.id}>
+                      <td style={styles.td}>{new Date(record.createdAt).toLocaleDateString()}</td>
+                      <td style={styles.td}>{record.trainingCount}</td>
+                      <td style={styles.td}>{(record.validationAcc * 100).toFixed(1)}%</td>
+                      <td style={styles.td}>
+                        <span style={record.isActive ? styles.activeBadge : styles.inactiveBadge}>
+                          {record.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
       {toast && <div className="toast">{toast}</div>}
@@ -362,6 +411,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white',
     fontWeight: 500,
     textTransform: 'uppercase' as const,
+  },
+  select: {
+    width: '100%',
+    padding: '10px 12px',
+    fontSize: '14px',
+    borderRadius: '8px',
+    border: '1px solid rgba(128,128,128,0.3)',
+    backgroundColor: 'var(--background)',
+    color: 'var(--foreground)',
+    cursor: 'pointer',
   },
   weightBars: {
     display: 'flex',

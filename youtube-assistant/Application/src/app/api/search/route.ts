@@ -12,9 +12,15 @@ import {
   incrementQuota,
 } from '@/services/storage';
 import { SearchRequest, SearchResponse, YouTubeChannelDetails } from '@/types';
+import { getSessionUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body: SearchRequest = await request.json();
     const { query } = body;
 
@@ -25,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`\n[search] ===== New search: "${query.trim()}" =====`);
+    console.log(`\n[search] ===== New search: "${query.trim()}" by ${user.email} =====`);
     console.time('[search] total');
 
     // Step 1: Search YouTube (100 units)
@@ -66,7 +72,7 @@ export async function POST(request: NextRequest) {
       const quotaUsed = QUOTA_COSTS.SEARCH + QUOTA_COSTS.VIDEOS_LIST;
       await incrementQuota(quotaUsed);
 
-      await addQueryHistory({
+      await addQueryHistory(user.email, {
         queryId,
         query: query.trim(),
         executedAt: new Date().toISOString(),
@@ -97,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     // Step 5: Rank videos (async for semantic similarity computation)
     console.time('[search] ranking');
-    const rankedVideos = await rankVideos(filteredVideos, channelMap, query.trim(), youtubeRankMap);
+    const rankedVideos = await rankVideos(filteredVideos, channelMap, query.trim(), youtubeRankMap, user.email);
     console.timeEnd('[search] ranking');
 
     // Step 6: Generate query ID and save to storage
@@ -106,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     await incrementQuota(quotaUsed);
 
-    await addQueryHistory({
+    await addQueryHistory(user.email, {
       queryId,
       query: query.trim(),
       executedAt: new Date().toISOString(),

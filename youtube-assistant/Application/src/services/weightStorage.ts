@@ -11,15 +11,16 @@ export const DEFAULT_WEIGHTS: WeightSet = {
 };
 
 /**
- * Get the currently active learned weights, or null if using defaults.
+ * Get the currently active learned weights for a user, or null if using defaults.
  */
-export async function getActiveWeights(): Promise<WeightRecord | null> {
+export async function getActiveWeights(userId: string): Promise<WeightRecord | null> {
   const result = await pool.query(
     `SELECT id, weights, training_count, validation_acc, is_active, created_at
      FROM ranking_weights
-     WHERE is_active = true
+     WHERE is_active = true AND user_id = $1
      ORDER BY created_at DESC
-     LIMIT 1`
+     LIMIT 1`,
+    [userId]
   );
 
   if (result.rows.length === 0) return null;
@@ -38,10 +39,11 @@ export async function getActiveWeights(): Promise<WeightRecord | null> {
 }
 
 /**
- * Save new weights and activate them.
- * Deactivates all previous weight records.
+ * Save new weights and activate them for a user.
+ * Deactivates all previous weight records for that user.
  */
 export async function saveWeights(
+  userId: string,
   weights: WeightSet,
   trainingCount: number,
   validationAcc: number
@@ -50,15 +52,18 @@ export async function saveWeights(
   try {
     await client.query('BEGIN');
 
-    // Deactivate all existing weights
-    await client.query('UPDATE ranking_weights SET is_active = false');
+    // Deactivate all existing weights for this user
+    await client.query(
+      'UPDATE ranking_weights SET is_active = false WHERE user_id = $1',
+      [userId]
+    );
 
     // Insert new active weights
     const result = await client.query(
-      `INSERT INTO ranking_weights (weights, training_count, validation_acc, is_active, created_at)
-       VALUES ($1, $2, $3, true, NOW())
+      `INSERT INTO ranking_weights (weights, training_count, validation_acc, is_active, created_at, user_id)
+       VALUES ($1, $2, $3, true, NOW(), $4)
        RETURNING id, weights, training_count, validation_acc, is_active, created_at`,
-      [JSON.stringify(weights), trainingCount, validationAcc]
+      [JSON.stringify(weights), trainingCount, validationAcc, userId]
     );
 
     await client.query('COMMIT');
@@ -83,13 +88,15 @@ export async function saveWeights(
 }
 
 /**
- * Get full weight history, newest first.
+ * Get full weight history for a user, newest first.
  */
-export async function getWeightHistory(): Promise<WeightRecord[]> {
+export async function getWeightHistory(userId: string): Promise<WeightRecord[]> {
   const result = await pool.query(
     `SELECT id, weights, training_count, validation_acc, is_active, created_at
      FROM ranking_weights
-     ORDER BY created_at DESC`
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [userId]
   );
 
   return result.rows.map((row) => ({
@@ -105,8 +112,11 @@ export async function getWeightHistory(): Promise<WeightRecord[]> {
 }
 
 /**
- * Revert to default weights by deactivating all learned weights.
+ * Revert to default weights by deactivating all learned weights for a user.
  */
-export async function revertToDefaults(): Promise<void> {
-  await pool.query('UPDATE ranking_weights SET is_active = false');
+export async function revertToDefaults(userId: string): Promise<void> {
+  await pool.query(
+    'UPDATE ranking_weights SET is_active = false WHERE user_id = $1',
+    [userId]
+  );
 }

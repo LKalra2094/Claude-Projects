@@ -23,3 +23,5 @@ Prioritized list of planned work. Completed items move to `Changelog.md`.
 | 21  | Authentication and user profiles    | Feature        | Auth provider (e.g. NextAuth)        | Two roles: regular and admin. Admin can access Admin tab, view weights, trigger model retrain. Regular users can only search and give feedback. |
 | 22  | Per-user daily API quota            | Feature        | #21 (auth)                           | Divide daily quota equally among active users. Track per-user consumption.                  |
 | 23  | Dark mode                          | UX             | —                                    | Add dark mode toggle or respect system preference. Apply across all tabs and components.    |
+| 24  | Sign-out confirmation dialog        | UX             | #21 (auth)                           | Show "Are you sure?" prompt before signing out. Prevent accidental sign-outs.               |
+| 25  | Admin per-user analytics dashboard  | Analytics      | #21 (auth)                           | Admin tab shows per-user stats: searches, video clicks, API units used.                     |
