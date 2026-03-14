@@ -19,29 +19,37 @@ export default function ResultsGrid({
   onClick,
 }: ResultsGridProps) {
   return (
-    <div style={styles.grid}>
-      {videos.map((video, index) => (
-        <VideoCard
-          key={video.videoId}
-          video={video}
-          rank={index + 1}
-          queryId={queryId}
-          currentFeedback={feedbackMap[video.videoId]}
-          onFeedback={onFeedback}
-          onClick={onClick}
-        />
-      ))}
-    </div>
+    <>
+      <style>{`
+        .results-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 20px;
+          width: 100%;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+        @media (max-width: 1200px) {
+          .results-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+          .results-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+      <div className="results-grid">
+        {videos.map((video, index) => (
+          <VideoCard
+            key={video.videoId}
+            video={video}
+            rank={index + 1}
+            queryId={queryId}
+            currentFeedback={feedbackMap[video.videoId]}
+            onFeedback={onFeedback}
+            onClick={onClick}
+          />
+        ))}
+      </div>
+    </>
   );
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '20px',
-    width: '100%',
-    maxWidth: '900px',
-    margin: '0 auto',
-  },
-};

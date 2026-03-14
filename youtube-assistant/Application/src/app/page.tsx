@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { RankedVideo, SearchResponse } from '@/types';
+import { RankedVideo, SearchResponse, AnalyticsPeriod } from '@/types';
 import QueryZone from '@/components/QueryZone';
 import ResultsGrid from '@/components/ResultsGrid';
 import LoadingState from '@/components/LoadingState';
@@ -21,6 +21,7 @@ export default function Home() {
   const [results, setResults] = useState<RankedVideo[]>([]);
   const [feedbackMap, setFeedbackMap] = useState<{ [videoId: string]: 'thumbs_up' | 'thumbs_down' | 'none' }>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>('7d');
 
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
@@ -178,7 +179,7 @@ export default function Home() {
 
             {state === 'results' && (
               <ResultsGrid
-                videos={results}
+                videos={results.slice(0, 20)}
                 queryId={queryId}
                 feedbackMap={feedbackMap}
                 onFeedback={handleFeedback}
@@ -194,7 +195,7 @@ export default function Home() {
           <StatusFooter />
         </>
       ) : (
-        <AnalyticsTab />
+        <AnalyticsTab timePeriod={analyticsPeriod} onTimePeriodChange={setAnalyticsPeriod} />
       )}
 
       {toast && <div className="toast">{toast}</div>}
