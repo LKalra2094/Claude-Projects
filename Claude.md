@@ -51,3 +51,31 @@ Each project lives in its own folder under `Claude Projects/`.
 All project-specific files, docs, code, and git history
 live inside that folder. Each project has its own `Claude.md`
 with context and reading order for that project.
+
+---
+
+## Development Workflow
+
+Every feature or fix follows this process. Claude should proactively prompt through each step.
+
+### 1. Plan
+1. Create `Iteration N - Implementation Plan.md` (Status: In Progress) with scope, problem, changes, and files affected.
+
+### 2. Build
+2. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
+3. Implement all code changes inside the worktree directory.
+4. Commit and push the worktree branch: `git push -u origin <branch-name>`
+
+### 3. Test
+5. Create a PR: `gh pr create --title "..." --body "..."`
+6. Open the Vercel preview URL (found in PR checks or Vercel dashboard) and verify changes.
+
+### 4. Ship
+7. Merge the PR: `gh pr merge --squash --delete-branch`
+8. Pull main: `git pull origin main`
+
+### 5. Clean Up
+9. Remove the worktree: `git worktree remove .worktrees/<name>` (use `--force` if needed)
+10. Delete the remote branch if not auto-deleted: `git push origin --delete <branch-name>`
+11. Mark the iteration plan as Status: Closed. Update Iterations list in project Claude.md and `Changelog.md`.
+12. Commit and push doc updates directly to main.
