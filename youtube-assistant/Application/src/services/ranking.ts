@@ -134,16 +134,17 @@ export function calculateCompositeScore(normalized: NormalizedSignals, weights: 
 
 /**
  * Main ranking function: takes filtered videos + channel data, returns ranked results.
- * Now async to support semantic similarity computation via embedding model.
+ * Now loads per-user weights.
  */
 export async function rankVideos(
   videos: YouTubeVideoDetails[],
   channelMap: Map<string, YouTubeChannelDetails>,
   query: string,
-  youtubeRankMap: Map<string, number>
+  youtubeRankMap: Map<string, number>,
+  userId: string
 ): Promise<RankedVideo[]> {
-  // Step 0: Load weights (learned or default)
-  const activeRecord = await getActiveWeights();
+  // Step 0: Load weights (learned or default) for this user
+  const activeRecord = await getActiveWeights(userId);
   const weights: WeightSet = activeRecord ? activeRecord.weights : DEFAULT_WEIGHTS;
 
   // Step 1: Compute semantic similarities using title + description + tags

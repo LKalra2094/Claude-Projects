@@ -6,6 +6,7 @@ import {
   TimeSeriesDataPoint,
   AnalyticsResponse,
 } from '@/types';
+import { getSessionUser } from '@/lib/auth';
 
 /**
  * Get date N days ago as YYYY-MM-DD string.
@@ -59,8 +60,17 @@ function getDateRange(startDate: string, endDate: string): string[] {
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const period = (searchParams.get('period') || '7d') as AnalyticsPeriod;
+    // Admin can view another user's analytics
+    const targetUserId = user.isAdmin && searchParams.get('userId')
+      ? searchParams.get('userId')!
+      : user.email;
 
     // Validate period
     if (!['7d', '30d', '90d', 'all'].includes(period)) {
@@ -78,7 +88,8 @@ export async function GET(request: NextRequest) {
     if (days === null) {
       // "all" - find earliest date in data
       const earliestResult = await pool.query(
-        `SELECT MIN(executed_at)::date AS earliest FROM query_history`
+        `SELECT MIN(executed_at)::date AS earliest FROM query_history WHERE user_id = $1`,
+        [targetUserId]
       );
       const earliest = earliestResult.rows[0]?.earliest;
       startDate = earliest
@@ -92,8 +103,8 @@ export async function GET(request: NextRequest) {
     const queriesResult = await pool.query(
       `SELECT query_id, executed_at::date AS date
        FROM query_history
-       WHERE executed_at::date >= $1 AND executed_at::date <= $2`,
-      [startDate, today]
+       WHERE executed_at::date >= $1 AND executed_at::date <= $2 AND user_id = $3`,
+      [startDate, today, targetUserId]
     );
 
     // Query 2: Latest feedback per (query_id, video_id)
@@ -101,21 +112,21 @@ export async function GET(request: NextRequest) {
       `SELECT DISTINCT ON (query_id, video_id)
          query_id, video_id, feedback
        FROM feedback
-       WHERE feedback_at::date >= $1 AND feedback_at::date <= $2
+       WHERE feedback_at::date >= $1 AND feedback_at::date <= $2 AND user_id = $3
        ORDER BY query_id, video_id, feedback_at DESC`,
-      [startDate, today]
+      [startDate, today, targetUserId]
     );
 
     // Query 3: Click counts per query
     const clicksResult = await pool.query(
       `SELECT query_id, COUNT(*)::integer AS click_count
        FROM click_events
-       WHERE clicked_at::date >= $1 AND clicked_at::date <= $2
+       WHERE clicked_at::date >= $1 AND clicked_at::date <= $2 AND user_id = $3
        GROUP BY query_id`,
-      [startDate, today]
+      [startDate, today, targetUserId]
     );
 
-    // Query 4: Quota log
+    // Query 4: Quota log (global, not per-user)
     const quotaResult = await pool.query(
       `SELECT date, units_used
        FROM quota_log

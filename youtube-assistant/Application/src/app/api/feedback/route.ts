@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addFeedback } from '@/services/storage';
 import { FeedbackRequest } from '@/types';
+import { getSessionUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body: FeedbackRequest = await request.json();
     const { queryId, videoId, feedback, compositeScore, rawSignals, normalizedSignals } = body;
 
@@ -21,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await addFeedback({
+    await addFeedback(user.email, {
       queryId,
       videoId,
       feedback,

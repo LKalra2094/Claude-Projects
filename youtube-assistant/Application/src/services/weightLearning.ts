@@ -102,11 +102,11 @@ function weightsSetToArray(ws: WeightSet): number[] {
 }
 
 /**
- * Fetch training data from feedback table.
+ * Fetch training data from feedback table for a specific user.
  * Only includes rows with normalized_signals and thumbs_up/thumbs_down feedback.
  * Uses most recent feedback per (query_id, video_id).
  */
-export async function fetchTrainingData(): Promise<{
+export async function fetchTrainingData(userId: string): Promise<{
   examples: TrainingExample[];
   thumbsUpCount: number;
   thumbsDownCount: number;
@@ -117,8 +117,9 @@ export async function fetchTrainingData(): Promise<{
     FROM feedback
     WHERE normalized_signals IS NOT NULL
       AND feedback IN ('thumbs_up', 'thumbs_down')
+      AND user_id = $1
     ORDER BY query_id, video_id, feedback_at DESC
-  `);
+  `, [userId]);
 
   let thumbsUpCount = 0;
   let thumbsDownCount = 0;
@@ -171,9 +172,10 @@ function computeAccuracy(weights: number[], data: TrainingExample[]): number {
  * Train weights using gradient descent on logistic loss.
  */
 export async function trainWeights(
+  userId: string,
   initialWeights: WeightSet
 ): Promise<TrainResult> {
-  const { examples, thumbsUpCount, thumbsDownCount } = await fetchTrainingData();
+  const { examples, thumbsUpCount, thumbsDownCount } = await fetchTrainingData(userId);
   const totalSamples = examples.length;
 
   if (totalSamples < MIN_SAMPLES) {

@@ -1,13 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getActiveWeights, getWeightHistory, DEFAULT_WEIGHTS } from '@/services/weightStorage';
 import { fetchTrainingData } from '@/services/weightLearning';
+import { getSessionUser } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Admin can view another user's weights
+    const { searchParams } = new URL(request.url);
+    const targetUserId = user.isAdmin && searchParams.get('userId')
+      ? searchParams.get('userId')!
+      : user.email;
+
     const [activeRecord, history, trainingData] = await Promise.all([
-      getActiveWeights(),
-      getWeightHistory(),
-      fetchTrainingData(),
+      getActiveWeights(targetUserId),
+      getWeightHistory(targetUserId),
+      fetchTrainingData(targetUserId),
     ]);
 
     return NextResponse.json({

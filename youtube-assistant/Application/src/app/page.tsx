@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { RankedVideo, SearchResponse, AnalyticsPeriod } from '@/types';
 import QueryZone from '@/components/QueryZone';
 import ResultsGrid from '@/components/ResultsGrid';
@@ -14,6 +15,9 @@ type AppState = 'idle' | 'loading' | 'results' | 'no-results' | 'error';
 type ActiveTab = 'search' | 'analytics' | 'admin';
 
 export default function Home() {
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as unknown as Record<string, unknown> | undefined)?.isAdmin === true;
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('search');
   const [menuOpen, setMenuOpen] = useState(false);
   const [state, setState] = useState<AppState>('idle');
@@ -154,19 +158,39 @@ export default function Home() {
               >
                 Analytics
               </button>
-              <button
-                style={{
-                  ...styles.menuItem,
-                  ...(activeTab === 'admin' ? styles.menuItemActive : {}),
-                }}
-                onClick={() => handleTabChange('admin')}
-              >
-                Admin
-              </button>
+              {isAdmin && (
+                <button
+                  style={{
+                    ...styles.menuItem,
+                    ...(activeTab === 'admin' ? styles.menuItemActive : {}),
+                  }}
+                  onClick={() => handleTabChange('admin')}
+                >
+                  Admin
+                </button>
+              )}
             </div>
           </>
         )}
       </nav>
+
+      {/* User info in header */}
+      {session?.user && (
+        <div style={styles.userInfo}>
+          {session.user.image && (
+            <img
+              src={session.user.image}
+              alt=""
+              style={styles.avatar}
+              referrerPolicy="no-referrer"
+            />
+          )}
+          <span style={styles.userName}>{session.user.name}</span>
+          <button style={styles.signOutBtn} onClick={() => signOut()}>
+            Sign out
+          </button>
+        </div>
+      )}
 
       {activeTab === 'search' && (
         <>
@@ -211,7 +235,7 @@ export default function Home() {
         <AnalyticsTab timePeriod={analyticsPeriod} onTimePeriodChange={setAnalyticsPeriod} />
       )}
 
-      {activeTab === 'admin' && <AdminTab />}
+      {activeTab === 'admin' && isAdmin && <AdminTab />}
 
       {toast && <div className="toast">{toast}</div>}
     </main>
@@ -283,6 +307,34 @@ const styles: { [key: string]: React.CSSProperties } = {
   menuItemActive: {
     backgroundColor: 'var(--accent)',
     color: 'white',
+  },
+  userInfo: {
+    position: 'absolute',
+    top: '20px',
+    right: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    zIndex: 100,
+  },
+  avatar: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+  },
+  userName: {
+    fontSize: '13px',
+    color: 'var(--foreground)',
+    fontWeight: 500,
+  },
+  signOutBtn: {
+    fontSize: '12px',
+    color: 'var(--text-muted)',
+    backgroundColor: 'transparent',
+    border: '1px solid rgba(128,128,128,0.3)',
+    borderRadius: '6px',
+    padding: '4px 10px',
+    cursor: 'pointer',
   },
   header: {
     textAlign: 'center',

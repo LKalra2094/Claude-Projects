@@ -21,11 +21,11 @@ export function generateQueryId(): string {
 /**
  * Add a query history entry.
  */
-export async function addQueryHistory(entry: QueryHistoryEntry): Promise<void> {
+export async function addQueryHistory(userId: string, entry: QueryHistoryEntry): Promise<void> {
   await pool.query(
-    `INSERT INTO query_history (query_id, query, executed_at, result_count, top_videos)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [entry.queryId, entry.query, entry.executedAt, entry.resultCount, entry.topVideos]
+    `INSERT INTO query_history (query_id, query, executed_at, result_count, top_videos, user_id)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [entry.queryId, entry.query, entry.executedAt, entry.resultCount, entry.topVideos, userId]
   );
 }
 
@@ -33,10 +33,10 @@ export async function addQueryHistory(entry: QueryHistoryEntry): Promise<void> {
  * Add a feedback entry.
  * Feedback is append-only; most recent per queryId+videoId is authoritative.
  */
-export async function addFeedback(entry: FeedbackEntry): Promise<void> {
+export async function addFeedback(userId: string, entry: FeedbackEntry): Promise<void> {
   await pool.query(
-    `INSERT INTO feedback (query_id, video_id, feedback, composite_score, raw_signals, normalized_signals, feedback_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    `INSERT INTO feedback (query_id, video_id, feedback, composite_score, raw_signals, normalized_signals, feedback_at, user_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       entry.queryId,
       entry.videoId,
@@ -45,6 +45,7 @@ export async function addFeedback(entry: FeedbackEntry): Promise<void> {
       JSON.stringify(entry.rawSignals),
       entry.normalizedSignals ? JSON.stringify(entry.normalizedSignals) : null,
       entry.feedbackAt,
+      userId,
     ]
   );
 }
@@ -83,11 +84,11 @@ export async function getLatestFeedback(
 /**
  * Add a click event.
  */
-export async function addClickEvent(event: ClickEvent): Promise<void> {
+export async function addClickEvent(userId: string, event: ClickEvent): Promise<void> {
   await pool.query(
-    `INSERT INTO click_events (query_id, video_id, clicked_rank, clicked_at)
-     VALUES ($1, $2, $3, $4)`,
-    [event.queryId, event.videoId, event.clickedRank, event.clickedAt]
+    `INSERT INTO click_events (query_id, video_id, clicked_rank, clicked_at, user_id)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [event.queryId, event.videoId, event.clickedRank, event.clickedAt, userId]
   );
 }
 

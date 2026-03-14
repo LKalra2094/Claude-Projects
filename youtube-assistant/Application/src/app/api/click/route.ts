@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addClickEvent } from '@/services/storage';
 import { ClickRequest } from '@/types';
+import { getSessionUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body: ClickRequest = await request.json();
     const { queryId, videoId, clickedRank } = body;
 
@@ -14,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await addClickEvent({
+    await addClickEvent(user.email, {
       queryId,
       videoId,
       clickedRank,
