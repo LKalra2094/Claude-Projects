@@ -35,7 +35,13 @@ Three independent features: (1) dark mode with system preference detection and m
 |------|--------|
 | `src/app/globals.css` | Add `[data-theme="dark"]` block with dark overrides for all 14 CSS variables. Add `@media (prefers-color-scheme: dark)` fallback. Update `.skeleton` to use CSS variables instead of hardcoded colors |
 | `src/app/layout.tsx` | Add blocking inline `<script>` in `<head>` that reads `localStorage('theme')` and sets `data-theme` before paint |
-| `src/app/page.tsx` | Add `theme` state (light/dark/system), init from localStorage. Moon/sun toggle button in header. `matchMedia` listener for live system preference changes |
+| `src/app/page.tsx` | Add `theme` state (light/dark/system), init from localStorage. Theme toggle button in header (see UI spec below). `matchMedia` listener for live system preference changes |
+
+**Theme toggle UI:**
+- **Position:** Header bar, to the left of the user info (avatar + name + sign-out button).
+- **Appearance:** Small icon button (no text label). Shows 🌙 moon when current theme is light (click to go dark). Shows ☀️ sun when current theme is dark (click to go light). A small "auto" label appears underneath the icon when in system mode.
+- **Cycle:** system → light → dark → system.
+- **Style:** Transparent background, same border style as the sign-out button. 28×28px hit area.
 | `src/app/signin/page.tsx` | Replace hardcoded `backgroundColor: 'white'` and `color: '#333'` with CSS variable equivalents |
 
 Dark palette: background `#0a0a0a`, foreground `#ededed`, card `#1a1a1a`, border `#2e2e2e`, muted `#a3a3a3`, secondary `#d4d4d4`, accent `#60a5fa`, primary `#ef4444`.
