@@ -56,10 +56,12 @@ with context and reading order for that project.
 
 ## Development Workflow
 
-Every feature or fix follows this process. Claude should proactively prompt through each step.
+Every feature or fix follows this process. There are two gates where Claude must stop and wait for user approval. Everything else runs autonomously.
 
 ### 1. Plan
 1. Create `Iteration N - Implementation Plan.md` (Status: In Progress) with scope, problem, changes, and files affected.
+
+**GATE 1 — Stop and wait for user approval before coding.**
 
 ### 2. Build
 2. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
@@ -68,13 +70,13 @@ Every feature or fix follows this process. Claude should proactively prompt thro
 
 ### 3. Test
 5. Create a PR: `gh pr create --title "..." --body "..."`
-6. Open the Vercel preview URL (found in PR checks or Vercel dashboard) and verify changes.
+6. User opens the Vercel preview URL (found in PR checks or Vercel dashboard) and verifies changes.
 
-### 4. Ship
+**GATE 2 — Stop and wait for user to confirm the PR looks good.**
+
+### 4. Ship + Clean Up (autonomous after Gate 2)
 7. Merge the PR: `gh pr merge --squash --delete-branch`
 8. Pull main: `git pull origin main`
-
-### 5. Clean Up
 9. Remove the worktree: `git worktree remove .worktrees/<name>` (use `--force` if needed)
 10. Delete the remote branch if not auto-deleted: `git push origin --delete <branch-name>`
 11. Mark the iteration plan as Status: Closed. Update Iterations list in project Claude.md and `Changelog.md`.
