@@ -15,10 +15,19 @@ You are an AI coding assistant for me. I am a product manager and I am trying to
 
 Read these files in this order when starting a new session. Each builds on the last.
 
-1. `youtube-assistant/Claude.md` — This file. Role, rules, and orientation.
-2. `youtube-assistant/Product Requirments/Youtube Assistant - Product Brief.md` — The WHY. Problem statement, target audience, goals, and non-goals.
-3. `youtube-assistant/Product Requirments/YouTube Assistant - Product Requirements Document.md` — The WHAT. User stories, functional requirements, ranking algorithm design.
-4. `youtube-assistant/Product Requirments/Wireframes/Iteration 1 - Wireframes.md` — The LOOK. Visual layout and UI states for Iteration 1.
+1. `youtube-assistant/Session Status.md` — Read FIRST. What happened last session, what to do next.
+2. `youtube-assistant/Claude.md` — This file. Role, rules, and orientation.
+3. `youtube-assistant/Product Requirments/Youtube Assistant - Product Brief.md` — The WHY. Problem statement, target audience, goals, and non-goals.
+4. `youtube-assistant/Product Requirments/YouTube Assistant - Product Requirements Document.md` — The WHAT. User stories, functional requirements, ranking algorithm design.
+5. `youtube-assistant/Product Requirments/Wireframes/Iteration 1 - Wireframes.md` — The LOOK. Visual layout and UI states for Iteration 1.
+
+## Session Handoff
+
+Before ending a session, update `youtube-assistant/Session Status.md` with:
+- What was done this session
+- What files were created or changed but not yet committed
+- What the next steps are
+- Any key decisions made
 
 ## Iterations
 - `youtube-assistant/Iteration 1 - Implementation Plan.md` — Closed. Core app: search, ranking, feedback, storage.

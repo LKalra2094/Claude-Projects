@@ -21,3 +21,5 @@ Prioritized list of planned work. Completed items move to `Changelog.md`.
 | 19  | 5 videos per row layout             | UX             | —                                    | Current layout shows 2 per row. Change to 5 for denser display.                             |
 | 20  | Define total results display limit  | UX             | —                                    | Define cutoff (top 20/30) or implement pagination/infinite scroll.                          |
 | 21  | Authentication and user profiles    | Feature        | Auth provider (e.g. NextAuth)        | Two roles: regular and admin. Admin can access Admin tab, view weights, trigger model retrain. Regular users can only search and give feedback. |
+| 22  | Per-user daily API quota            | Feature        | #21 (auth)                           | Divide daily quota equally among active users. Track per-user consumption.                  |
+| 23  | Dark mode                          | UX             | —                                    | Add dark mode toggle or respect system preference. Apply across all tabs and components.    |
