@@ -6,22 +6,23 @@
 
 ## Where We Left Off
 
-Iteration 7 (Authentication & Per-User Data) is planned and waiting for approval to build.
+Iteration 7 (Authentication & Per-User Data) shipped via PR #4. Merged to main.
 
-### Created but not yet committed:
-- `Iteration 7 - Implementation Plan.md` — Auth.js v5 + Google sign-in + per-user data partitioning
-- `Product Requirments/Wireframes/Iteration 7 - Wireframes.md` — 6 wireframes for sign-in page, header states, admin user picker
-- `Backlog.md` — Added #22 (per-user API quota) and #23 (dark mode)
+### What Was Done
+- Full Auth.js v5 implementation with Google OAuth, JWT sessions, Edge-compatible middleware
+- Per-user data partitioning across all tables (query_history, feedback, click_events, ranking_weights)
+- DB migration (migrate-v3.js) run against Neon — users table created, user_id columns added
+- Admin role via ADMIN_EMAIL env var — admin sees Admin tab with user picker
+- Sign-in page, header with avatar/name/sign-out, role-based tab visibility
+- Tested admin and non-admin flows on Vercel preview
+- Added backlog items #24 (sign-out confirmation) and #25 (admin per-user analytics)
 
 ### Next Steps
 
-1. **Get approval** on Iteration 7 implementation plan
-2. **Build** — create worktree, implement all 5 phases, commit, push, create PR
-3. **Before building**: Set up Google OAuth credentials in Google Cloud Console and add env vars (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NEXTAUTH_SECRET, ADMIN_EMAIL) to Vercel and local .env.local
-4. **After PR**: User tests on Vercel preview, then Ship + Clean Up
+1. Pick next iteration from Backlog.md (candidates: #24 sign-out confirmation, #25 admin analytics, #23 dark mode)
+2. Write implementation plan, get approval, build
 
-### Key Decisions Made This Session
-- Auth approach: Auth.js v5, Google provider, JWT sessions, admin via ADMIN_EMAIL env var
-- All data tables get user_id column (feedback, query_history, click_events, ranking_weights)
-- Historical data migrated to admin's user_id
-- Development workflow moved to root CLAUDE.md with two explicit gates (after plan, after PR)
+### Key Decisions Made
+- Edge middleware checks session token cookie directly (no Node.js imports) to avoid runtime errors
+- Admin determined by ADMIN_EMAIL env var comparison in JWT callback
+- Double cast through `unknown` for isAdmin on session.user (TypeScript limitation)

@@ -49,8 +49,55 @@ Every new document should start with this header:
 
 Each project lives in its own folder under `Claude Projects/`.
 All project-specific files, docs, code, and git history
-live inside that folder. Each project has its own `Claude.md`
-with context and reading order for that project.
+live inside that folder. When starting a new project,
+create the following structure:
+
+```
+project-name/
+├── Claude.md                          # Project context, reading order, iterations list
+├── Session Status.md                  # What happened last, what to do next
+├── Backlog.md                         # Prioritized planned work
+├── Changelog.md                       # All shipped work, grouped by iteration
+├── Iteration N - Implementation Plan.md   # One per iteration (1, 2, 3…)
+├── Product Requirements/
+│   ├── Project Name - Product Brief.md        # The WHY: problem, audience, goals
+│   ├── Project Name - Product Requirements Document.md  # The WHAT: user stories, requirements
+│   └── Wireframes/
+│       ├── Iteration N - Wireframes.md        # Visual layout per iteration
+│       └── Wireframe Tracker.md               # Status of all wireframes
+└── Application/                       # All source code lives here
+    └── ...
+```
+
+### Project Claude.md
+
+Every project's `Claude.md` must include:
+
+1. **Role context** — What this project is, who the user is in relation to it.
+2. **Project location rule** — All files stay inside the project folder.
+3. **Context reading order** — Numbered list of files to read when starting a session (Session Status first, then Claude.md, then Product Brief, PRD, Wireframes).
+4. **Session handoff protocol** — Before ending a session, update `Session Status.md` with what was done, what changed, next steps, and key decisions.
+5. **Iterations list** — Running list of all iteration plans with status (In Progress / Closed).
+6. **Reference section** — Pointers to Backlog, Changelog, and Wireframe Tracker.
+
+### Session Status.md
+
+Acts as the handoff between sessions. Always read first.
+Updated at the end of every session with:
+- What was done
+- What files were created or changed
+- What the next steps are
+- Key decisions made
+
+### Backlog.md
+
+Prioritized list of upcoming work. Items move to
+Changelog.md when shipped as part of an iteration.
+
+### Changelog.md
+
+Record of all shipped work, grouped by iteration.
+Updated during the Ship + Clean Up phase.
 
 ---
 

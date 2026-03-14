@@ -36,6 +36,7 @@ Before ending a session, update `youtube-assistant/Session Status.md` with:
 - `youtube-assistant/Iteration 4 - Implementation Plan.md` — Closed. YouTube rank signal + weight rebalancing.
 - `youtube-assistant/Iteration 5 - Implementation Plan.md` — Closed. Adaptive ranking weights (ML from feedback).
 - `youtube-assistant/Iteration 6 - Implementation Plan.md` — Closed. UI polish (5-per-row, result limit, analytics state).
+- `youtube-assistant/Iteration 7 - Implementation Plan.md` — Closed. Auth (Google OAuth) + per-user data partitioning.
 
 ## Reference (read as needed)
 - `youtube-assistant/Backlog.md` — Prioritized planned work. Items move to Changelog when done.

@@ -5,6 +5,20 @@
 
 ---
 
+## Iteration 7 — Authentication & Per-User Data (March 2026)
+
+- Add Google sign-in via Auth.js v5 (NextAuth) with JWT sessions
+- Create sign-in page with Google OAuth button
+- Edge-compatible middleware redirects unauthenticated users to sign-in
+- Create users table, upsert user on every sign-in
+- Add user_id column to query_history, feedback, click_events, ranking_weights
+- Migrate historical data to admin's user_id
+- All API routes extract session user and filter data by user_id
+- Admin tab shows user picker to view/manage any user's weights
+- Admin tab restricted to ADMIN_EMAIL; non-admins see only Search + Analytics
+- User avatar, name, and sign-out button in header
+- Backlog items #21 (auth) and #22 (per-user quota dependency) resolved
+
 ## Iteration 6 — UI Polish (March 2026)
 
 - Display 5 videos per row on desktop (3 tablet, 1 mobile) with responsive grid
