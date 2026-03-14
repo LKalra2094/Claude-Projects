@@ -20,14 +20,11 @@ Read these files in this order when starting a new session. Each builds on the l
 3. `youtube-assistant/Product Requirments/YouTube Assistant - Product Requirements Document.md` — The WHAT. User stories, functional requirements, ranking algorithm design.
 4. `youtube-assistant/Product Requirments/Wireframes/Iteration 1 - Wireframes.md` — The LOOK. Visual layout and UI states for Iteration 1.
 
-## Past Iterations (read as needed)
+## Iterations
 - `youtube-assistant/Iteration 1 - Implementation Plan.md` — Closed. Core app: search, ranking, feedback, storage.
 - `youtube-assistant/Iteration 2 - Implementation Plan.md` — Closed. Semantic search + Analytics tab.
 - `youtube-assistant/Iteration 3 - Implementation Plan.md` — Closed. Neon DB + Cohere embeddings + Vercel deploy.
 - `youtube-assistant/Iteration 4 - Implementation Plan.md` — Closed. YouTube rank signal + weight rebalancing.
-
-## Current Sprint
-- `youtube-assistant/Current Sprint.md` — The active implementation plan. Renamed to `Iteration N - Implementation Plan.md` when closed.
 
 ## Reference (read as needed)
 - `youtube-assistant/Backlog.md` — Prioritized planned work. Items move to Changelog when done.
@@ -41,7 +38,7 @@ Read these files in this order when starting a new session. Each builds on the l
 Every feature or fix follows this process. Claude should proactively prompt through each step.
 
 ### 1. Plan
-1. Create `youtube-assistant/Current Sprint.md` with scope, problem, changes, and files affected.
+1. Create `youtube-assistant/Iteration N - Implementation Plan.md` (Status: In Progress) with scope, problem, changes, and files affected.
 
 ### 2. Build
 2. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
@@ -59,6 +56,5 @@ Every feature or fix follows this process. Claude should proactively prompt thro
 ### 5. Clean Up
 9. Remove the worktree: `git worktree remove .worktrees/<name>` (use `--force` if needed)
 10. Delete the remote branch if not auto-deleted: `git push origin --delete <branch-name>`
-11. Rename `Current Sprint.md` → `Iteration N - Implementation Plan.md` and mark Status: Closed.
-12. Add iteration to Past Iterations in this file and update `Changelog.md`.
-13. Commit and push doc updates directly to main.
+11. Mark the iteration plan as Status: Closed. Update Iterations list in this file and `Changelog.md`.
+12. Commit and push doc updates directly to main.
