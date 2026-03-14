@@ -107,12 +107,14 @@ Every feature or fix follows this process. There are two gates where Claude must
 
 ### 1. Plan
 1. Create `Iteration N - Implementation Plan.md` (Status: In Progress) with scope, problem, changes, and files affected.
+   - **Commit this directly to main** — implementation plans are docs, not code.
 
 **GATE 1 — Stop and wait for user approval before coding.**
 
 ### 2. Build
 2. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
 3. Implement all code changes inside the worktree directory.
+   - **Only source code goes in worktrees.** Documentation (plans, session status, changelog, backlog) is always committed directly to main.
 4. Commit and push the worktree branch: `git push -u origin <branch-name>`
 
 ### 3. Test
