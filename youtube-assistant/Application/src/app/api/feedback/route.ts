@@ -5,7 +5,7 @@ import { FeedbackRequest } from '@/types';
 export async function POST(request: NextRequest) {
   try {
     const body: FeedbackRequest = await request.json();
-    const { queryId, videoId, feedback, compositeScore, rawSignals } = body;
+    const { queryId, videoId, feedback, compositeScore, rawSignals, normalizedSignals } = body;
 
     if (!queryId || !videoId || !feedback) {
       return NextResponse.json(
@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       feedback,
       compositeScore,
       rawSignals,
+      normalizedSignals,
       feedbackAt: new Date().toISOString(),
     });
 

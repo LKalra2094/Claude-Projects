@@ -35,14 +35,15 @@ export async function addQueryHistory(entry: QueryHistoryEntry): Promise<void> {
  */
 export async function addFeedback(entry: FeedbackEntry): Promise<void> {
   await pool.query(
-    `INSERT INTO feedback (query_id, video_id, feedback, composite_score, raw_signals, feedback_at)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO feedback (query_id, video_id, feedback, composite_score, raw_signals, normalized_signals, feedback_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
       entry.queryId,
       entry.videoId,
       entry.feedback,
       entry.compositeScore,
       JSON.stringify(entry.rawSignals),
+      entry.normalizedSignals ? JSON.stringify(entry.normalizedSignals) : null,
       entry.feedbackAt,
     ]
   );
