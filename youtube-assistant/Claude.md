@@ -24,6 +24,7 @@ Read these files in this order when starting a new session. Each builds on the l
 - `youtube-assistant/Iteration 1 - Implementation Plan.md` — Closed. Core app: search, ranking, feedback, storage.
 - `youtube-assistant/Iteration 2 - Implementation Plan.md` — Closed. Semantic search + Analytics tab.
 - `youtube-assistant/Iteration 3 - Implementation Plan.md` — Closed. Neon DB + Cohere embeddings + Vercel deploy.
+- `youtube-assistant/Iteration 4 - Implementation Plan.md` — Closed. YouTube rank signal + weight rebalancing.
 
 ## Current Sprint
 - `youtube-assistant/Current Sprint.md` — The active implementation plan. Renamed to `Iteration N - Implementation Plan.md` when closed.

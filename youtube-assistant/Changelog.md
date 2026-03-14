@@ -5,6 +5,13 @@
 
 ---
 
+## Iteration 4 — Ranking Improvements (March 2026)
+
+- Add YouTube's native relevance ranking as a new signal (25% weight)
+- Boost semantic similarity to 25%, reduce freshness to 8%
+- Equalize subscriber count, view count, and comment density at 14% each
+- Add "YouTube Rank" to score breakdown tooltip
+
 ## Iteration 3 — Backend Migration & Deployment (March 2026)
 
 Infrastructure-only release. No UI changes.
