@@ -11,8 +11,14 @@ const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: 'all', label: 'All' },
 ];
 
-export default function AnalyticsTab() {
-  const [period, setPeriod] = useState<AnalyticsPeriod>('7d');
+interface AnalyticsTabProps {
+  timePeriod: AnalyticsPeriod;
+  onTimePeriodChange: (period: AnalyticsPeriod) => void;
+}
+
+export default function AnalyticsTab({ timePeriod, onTimePeriodChange }: AnalyticsTabProps) {
+  const period = timePeriod;
+  const setPeriod = onTimePeriodChange;
   const [data, setData] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
