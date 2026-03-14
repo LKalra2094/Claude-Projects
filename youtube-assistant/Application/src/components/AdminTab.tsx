@@ -22,6 +22,15 @@ interface UserInfo {
   createdAt: string;
 }
 
+interface UserStats {
+  email: string;
+  name: string;
+  image: string;
+  totalSearches: number;
+  totalClicks: number;
+  totalFeedback: number;
+}
+
 interface WeightsData {
   source: 'learned' | 'default';
   weights: WeightSet;
@@ -59,11 +68,30 @@ export default function AdminTab() {
   const [trainResult, setTrainResult] = useState<TrainResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [userStats, setUserStats] = useState<UserStats[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
+
+  // Fetch user activity stats
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/user-stats');
+        if (!res.ok) return;
+        const result = await res.json();
+        setUserStats(result.users);
+      } catch {
+        // silently fail
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+    loadStats();
+  }, []);
 
   // Fetch users list
   useEffect(() => {
@@ -198,6 +226,53 @@ export default function AdminTab() {
           </select>
         </div>
       )}
+
+      {/* User Activity */}
+      <div style={styles.card}>
+        <h3 style={styles.cardTitle}>User Activity</h3>
+        {statsLoading ? (
+          <p style={styles.muted}>Loading...</p>
+        ) : userStats.length === 0 ? (
+          <p style={styles.muted}>No user activity yet.</p>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>User</th>
+                <th style={styles.th}>Email</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Searches</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Clicks</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Feedback</th>
+              </tr>
+            </thead>
+            <tbody>
+              {userStats.map((u) => (
+                <tr key={u.email}>
+                  <td style={styles.td}>
+                    <div style={styles.userCell}>
+                      {u.image && (
+                        <img
+                          src={u.image}
+                          alt=""
+                          style={styles.userAvatar}
+                          referrerPolicy="no-referrer"
+                        />
+                      )}
+                      <span>{u.name || '—'}</span>
+                    </div>
+                  </td>
+                  <td style={{ ...styles.td, fontSize: '12px', color: 'var(--text-muted)' }}>
+                    {u.email}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'right' }}>{u.totalSearches}</td>
+                  <td style={{ ...styles.td, textAlign: 'right' }}>{u.totalClicks}</td>
+                  <td style={{ ...styles.td, textAlign: 'right' }}>{u.totalFeedback}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {error && (
         <div style={styles.errorBanner}>
@@ -621,5 +696,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '10px',
     backgroundColor: 'rgba(128,128,128,0.1)',
     color: 'var(--text-muted)',
+  },
+  userCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  userAvatar: {
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    flexShrink: 0,
   },
 };
