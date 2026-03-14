@@ -8,9 +8,10 @@ import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import StatusFooter from '@/components/StatusFooter';
 import AnalyticsTab from '@/components/AnalyticsTab';
+import AdminTab from '@/components/AdminTab';
 
 type AppState = 'idle' | 'loading' | 'results' | 'no-results' | 'error';
-type ActiveTab = 'search' | 'analytics';
+type ActiveTab = 'search' | 'analytics' | 'admin';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('search');
@@ -92,6 +93,7 @@ export default function Home() {
           feedback,
           compositeScore: video.compositeScore,
           rawSignals: video.rawSignals,
+          normalizedSignals: video.normalizedSignals,
         }),
       });
 
@@ -152,12 +154,21 @@ export default function Home() {
               >
                 Analytics
               </button>
+              <button
+                style={{
+                  ...styles.menuItem,
+                  ...(activeTab === 'admin' ? styles.menuItemActive : {}),
+                }}
+                onClick={() => handleTabChange('admin')}
+              >
+                Admin
+              </button>
             </div>
           </>
         )}
       </nav>
 
-      {activeTab === 'search' ? (
+      {activeTab === 'search' && (
         <>
           <header style={styles.header}>
             <h1 style={styles.title}>YouTube Assistant</h1>
@@ -194,9 +205,13 @@ export default function Home() {
 
           <StatusFooter />
         </>
-      ) : (
+      )}
+
+      {activeTab === 'analytics' && (
         <AnalyticsTab timePeriod={analyticsPeriod} onTimePeriodChange={setAnalyticsPeriod} />
       )}
+
+      {activeTab === 'admin' && <AdminTab />}
 
       {toast && <div className="toast">{toast}</div>}
     </main>

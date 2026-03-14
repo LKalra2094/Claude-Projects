@@ -111,6 +111,7 @@ export interface FeedbackEntry {
   feedback: 'thumbs_up' | 'thumbs_down' | 'none';
   compositeScore: number;
   rawSignals: RawSignals;
+  normalizedSignals?: NormalizedSignals;
   feedbackAt: string;
 }
 
@@ -155,6 +156,29 @@ export interface FeedbackRequest {
   feedback: 'thumbs_up' | 'thumbs_down' | 'none';
   compositeScore: number;
   rawSignals: RawSignals;
+  normalizedSignals: NormalizedSignals;
+}
+
+// ============================================
+// Weight Learning Types
+// ============================================
+
+export interface WeightSet {
+  commentDensity: number;
+  subscriberCount: number;
+  queryDescriptionOverlap: number;
+  viewCount: number;
+  freshness: number;
+  youtubeRank: number;
+}
+
+export interface WeightRecord {
+  id: number;
+  weights: WeightSet;
+  trainingCount: number;
+  validationAcc: number;
+  isActive: boolean;
+  createdAt: string;
 }
 
 // POST /api/click
