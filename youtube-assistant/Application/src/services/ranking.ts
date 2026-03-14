@@ -9,11 +9,12 @@ import { parseDuration } from './youtube';
 import { calculateSemanticSimilarities } from './embeddings';
 
 const WEIGHTS = {
-  commentDensity: 0.20,
-  subscriberCount: 0.20,
-  queryDescriptionOverlap: 0.20,
-  viewCount: 0.20,
-  freshness: 0.20,
+  commentDensity: 0.14,
+  subscriberCount: 0.14,
+  queryDescriptionOverlap: 0.25,
+  viewCount: 0.14,
+  freshness: 0.08,
+  youtubeRank: 0.25,
 };
 
 // Constants for log normalization
@@ -57,7 +58,8 @@ function daysSince(isoDate: string): number {
 export function extractRawSignals(
   video: YouTubeVideoDetails,
   channel: YouTubeChannelDetails | undefined,
-  semanticSimilarity: number
+  semanticSimilarity: number,
+  youtubeRank: number
 ): RawSignals {
   const viewCount = Math.max(parseInt(video.statistics.viewCount || '0', 10), 1);
   const commentCount = parseInt(video.statistics.commentCount || '0', 10);
@@ -71,6 +73,7 @@ export function extractRawSignals(
     queryDescriptionOverlap: semanticSimilarity,
     viewCount,
     freshness: daysSince(video.snippet.publishedAt),
+    youtubeRank,
   };
 }
 
@@ -82,7 +85,8 @@ export function extractRawSignals(
 export function normalizeSignals(
   rawSignals: RawSignals,
   minCommentDensity: number,
-  maxCommentDensity: number
+  maxCommentDensity: number,
+  totalCandidates: number
 ): NormalizedSignals {
   // Comment density: min-max normalization
   const commentDensityRange = maxCommentDensity - minCommentDensity;
@@ -105,12 +109,19 @@ export function normalizeSignals(
   // Freshness: recency decay (rawSignals.freshness is days since published)
   const normalizedFreshness = Math.max(0, 1 - rawSignals.freshness / MAX_AGE_DAYS);
 
+  // YouTube rank: linear decay (rank 1 = 1.0, last rank = 0.0)
+  const normalizedYoutubeRank =
+    totalCandidates > 1
+      ? 1 - (rawSignals.youtubeRank - 1) / (totalCandidates - 1)
+      : 1;
+
   return {
     commentDensity: Math.min(1, Math.max(0, normalizedCommentDensity)),
     subscriberCount: Math.min(1, Math.max(0, normalizedSubscriberCount)),
     queryDescriptionOverlap: Math.min(1, Math.max(0, normalizedOverlap)),
     viewCount: Math.min(1, Math.max(0, normalizedViewCount)),
     freshness: Math.min(1, Math.max(0, normalizedFreshness)),
+    youtubeRank: Math.min(1, Math.max(0, normalizedYoutubeRank)),
   };
 }
 
@@ -123,7 +134,8 @@ export function calculateCompositeScore(normalized: NormalizedSignals): number {
     normalized.subscriberCount * WEIGHTS.subscriberCount +
     normalized.queryDescriptionOverlap * WEIGHTS.queryDescriptionOverlap +
     normalized.viewCount * WEIGHTS.viewCount +
-    normalized.freshness * WEIGHTS.freshness
+    normalized.freshness * WEIGHTS.freshness +
+    normalized.youtubeRank * WEIGHTS.youtubeRank
   );
 }
 
@@ -134,7 +146,8 @@ export function calculateCompositeScore(normalized: NormalizedSignals): number {
 export async function rankVideos(
   videos: YouTubeVideoDetails[],
   channelMap: Map<string, YouTubeChannelDetails>,
-  query: string
+  query: string,
+  youtubeRankMap: Map<string, number>
 ): Promise<RankedVideo[]> {
   // Step 1: Compute semantic similarities using title + description + tags
   const descriptions = videos.map((video) =>
@@ -154,7 +167,8 @@ export async function rankVideos(
     rawSignals: extractRawSignals(
       video,
       channelMap.get(video.snippet.channelId),
-      similarities[index]
+      similarities[index],
+      youtubeRankMap.get(video.id) ?? videos.length
     ),
   }));
 
@@ -164,8 +178,9 @@ export async function rankVideos(
   const maxCommentDensity = Math.max(...commentDensities);
 
   // Step 4: Normalize and score
+  const totalCandidates = videos.length;
   const rankedVideos: RankedVideo[] = videosWithRawSignals.map(({ video, rawSignals }) => {
-    const normalizedSignals = normalizeSignals(rawSignals, minCommentDensity, maxCommentDensity);
+    const normalizedSignals = normalizeSignals(rawSignals, minCommentDensity, maxCommentDensity, totalCandidates);
     const compositeScore = calculateCompositeScore(normalizedSignals);
 
     return {

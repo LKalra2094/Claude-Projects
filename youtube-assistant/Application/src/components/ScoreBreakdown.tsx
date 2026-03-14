@@ -13,6 +13,7 @@ const SIGNAL_LABELS: { [key in keyof NormalizedSignals]: string } = {
   queryDescriptionOverlap: 'Relevance',
   viewCount: 'Popularity',
   freshness: 'Freshness',
+  youtubeRank: 'YouTube Rank',
 };
 
 export default function ScoreBreakdown({ normalizedSignals, compositeScore }: ScoreBreakdownProps) {

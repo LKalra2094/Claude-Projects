@@ -64,6 +64,7 @@ export interface RawSignals {
   queryDescriptionOverlap: number;
   viewCount: number;
   freshness: number;
+  youtubeRank: number;
 }
 
 export interface NormalizedSignals {
@@ -72,6 +73,7 @@ export interface NormalizedSignals {
   queryDescriptionOverlap: number;
   viewCount: number;
   freshness: number;
+  youtubeRank: number;
 }
 
 export interface RankedVideo {

@@ -36,6 +36,12 @@ export async function POST(request: NextRequest) {
 
     const videoIds = searchResults.map((r) => r.id.videoId);
 
+    // Build YouTube rank map (1-indexed position from YouTube's relevance order)
+    const youtubeRankMap = new Map<string, number>();
+    searchResults.forEach((r, index) => {
+      youtubeRankMap.set(r.id.videoId, index + 1);
+    });
+
     if (videoIds.length === 0) {
       console.timeEnd('[search] total');
       return NextResponse.json({
@@ -91,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     // Step 5: Rank videos (async for semantic similarity computation)
     console.time('[search] ranking');
-    const rankedVideos = await rankVideos(filteredVideos, channelMap, query.trim());
+    const rankedVideos = await rankVideos(filteredVideos, channelMap, query.trim(), youtubeRankMap);
     console.timeEnd('[search] ranking');
 
     // Step 6: Generate query ID and save to storage
