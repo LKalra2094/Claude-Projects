@@ -19,9 +19,16 @@ Read these files in this order when starting a new session. Each builds on the l
 2. `youtube-assistant/Product Requirments/Youtube Assistant - Product Brief.md` — The WHY. Problem statement, target audience, goals, and non-goals.
 3. `youtube-assistant/Product Requirments/YouTube Assistant - Product Requirements Document.md` — The WHAT. User stories, functional requirements, ranking algorithm design.
 4. `youtube-assistant/Product Requirments/Wireframes/Iteration 1 - Wireframes.md` — The LOOK. Visual layout and UI states for Iteration 1.
-5. `youtube-assistant/Iteration 1 - Implementation Plan.md` — The HOW for Iteration 1. Closed.
-6. `youtube-assistant/Iteration 2 - Implementation Plan.md` — The HOW for Iteration 2. Semantic search + Analytics tab.
+
+## Past Iterations (read as needed)
+- `youtube-assistant/Iteration 1 - Implementation Plan.md` — Closed. Core app: search, ranking, feedback, storage.
+- `youtube-assistant/Iteration 2 - Implementation Plan.md` — Closed. Semantic search + Analytics tab.
+- `youtube-assistant/Iteration 3 - Implementation Plan.md` — Closed. Neon DB + Cohere embeddings + Vercel deploy.
+
+## Current Sprint
+- `youtube-assistant/Current Sprint.md` — The active implementation plan. Renamed to `Iteration N - Implementation Plan.md` when closed.
 
 ## Reference (read as needed)
-- `youtube-assistant/Backlog.md` — Product backlog. Planned work beyond current iteration, with dependency chain and iteration targeting.
-- `youtube-assistant/Product Requirments/Wireframes/Wireframe Tracker.md` — Running log of all wireframes across iterations, with status and what's queued for Iteration 2+
+- `youtube-assistant/Backlog.md` — Prioritized planned work. Items move to Changelog when done.
+- `youtube-assistant/Changelog.md` — All shipped work, grouped by iteration.
+- `youtube-assistant/Product Requirments/Wireframes/Wireframe Tracker.md` — Running log of all wireframes across iterations, with status and what's queued.
