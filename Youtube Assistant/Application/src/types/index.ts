@@ -31,6 +31,7 @@ export interface YouTubeVideoDetails {
       high: { url: string; width: number; height: number };
     };
     liveBroadcastContent: 'none' | 'live' | 'upcoming';
+    tags?: string[];
   };
   statistics: {
     viewCount: string;
@@ -91,7 +92,7 @@ export interface RankedVideo {
 }
 
 // ============================================
-// Storage Types (JSON file schema)
+// Storage Types
 // ============================================
 
 export interface QueryHistoryEntry {

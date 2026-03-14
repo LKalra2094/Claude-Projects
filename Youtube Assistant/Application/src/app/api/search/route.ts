@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
     if (filteredVideos.length === 0) {
       const queryId = generateQueryId();
       const quotaUsed = QUOTA_COSTS.SEARCH + QUOTA_COSTS.VIDEOS_LIST;
-      incrementQuota(quotaUsed);
+      await incrementQuota(quotaUsed);
 
-      addQueryHistory({
+      await addQueryHistory({
         queryId,
         query: query.trim(),
         executedAt: new Date().toISOString(),
@@ -98,9 +98,9 @@ export async function POST(request: NextRequest) {
     const queryId = generateQueryId();
     const quotaUsed = QUOTA_COSTS.SEARCH + QUOTA_COSTS.VIDEOS_LIST + QUOTA_COSTS.CHANNELS_LIST;
 
-    incrementQuota(quotaUsed);
+    await incrementQuota(quotaUsed);
 
-    addQueryHistory({
+    await addQueryHistory({
       queryId,
       query: query.trim(),
       executedAt: new Date().toISOString(),

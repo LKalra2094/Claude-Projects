@@ -1,127 +1,94 @@
-import { pipeline, FeatureExtractionPipeline } from '@xenova/transformers';
-import { join } from 'path';
+import { CohereClient } from 'cohere-ai';
 
-// Module-level variable to cache the model
-let embeddingPipeline: FeatureExtractionPipeline | null = null;
-
-const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
-const MODEL_CACHE_DIR = join(process.cwd(), 'models', 'Semantic_Search_Model');
-
-/**
- * Get or initialize the embedding pipeline.
- * Model loads once and stays in memory for subsequent requests.
- */
-async function getEmbeddingPipeline(): Promise<FeatureExtractionPipeline> {
-  if (embeddingPipeline) {
-    console.log('[embeddings] Using cached model');
-    return embeddingPipeline;
-  }
-
-  console.log(`[embeddings] MODEL_CACHE_DIR: ${MODEL_CACHE_DIR}`);
-  console.log('[embeddings] Loading embedding model...');
-  console.time('[embeddings] model-load');
-  embeddingPipeline = await pipeline('feature-extraction', MODEL_NAME, {
-    cache_dir: MODEL_CACHE_DIR,
-    local_files_only: true,
-  });
-  console.timeEnd('[embeddings] model-load');
-  console.log('[embeddings] Model loaded successfully');
-
-  return embeddingPipeline;
-}
-
-/**
- * Encode a single text string into a vector embedding.
- * Returns a normalized vector (unit length for cosine similarity).
- */
-export async function encodeText(text: string): Promise<number[]> {
-  const pipe = await getEmbeddingPipeline();
-  const output = await pipe(text, { pooling: 'mean', normalize: true });
-  return Array.from(output.data as Float32Array);
-}
-
-/**
- * Encode multiple text strings into vector embeddings.
- * More efficient than encoding one at a time.
- */
-export async function encodeTexts(texts: string[]): Promise<number[][]> {
-  const pipe = await getEmbeddingPipeline();
-  const embeddings: number[][] = [];
-
-  console.log(`[embeddings] Encoding ${texts.length} descriptions...`);
-  console.time('[embeddings] encode-descriptions');
-
-  for (let i = 0; i < texts.length; i++) {
-    const text = texts[i];
-    if (!text || text.trim().length === 0) {
-      // Empty text gets zero vector
-      embeddings.push([]);
-    } else {
-      const output = await pipe(text, { pooling: 'mean', normalize: true });
-      embeddings.push(Array.from(output.data as Float32Array));
-    }
-    if (i === 0) {
-      console.log('[embeddings] First description encoded successfully');
-    }
-  }
-
-  console.timeEnd('[embeddings] encode-descriptions');
-  return embeddings;
-}
+const cohere = new CohereClient({
+  token: process.env.COHERE_API_KEY,
+});
 
 /**
  * Calculate cosine similarity between two vectors.
- * Both vectors should already be normalized (unit length).
  * Returns a value between 0 and 1 (clamped for numerical stability).
  */
 export function cosineSimilarity(a: number[], b: number[]): number {
-  // Handle empty vectors
   if (a.length === 0 || b.length === 0) {
     return 0;
   }
 
-  // Dot product of normalized vectors = cosine similarity
   let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
   for (let i = 0; i < a.length; i++) {
     dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
   }
 
-  // Clamp to [0, 1] range (negative similarity treated as 0 for our use case)
-  return Math.max(0, Math.min(1, dotProduct));
-}
+  const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+  if (denominator === 0) return 0;
 
-/**
- * Calculate semantic similarity between a query and a description.
- * Returns a value between 0 and 1.
- */
-export async function calculateSemanticSimilarity(
-  query: string,
-  description: string
-): Promise<number> {
-  if (!description || description.trim().length === 0) {
-    return 0;
-  }
-
-  const [queryEmbedding, descEmbedding] = await Promise.all([
-    encodeText(query),
-    encodeText(description),
-  ]);
-
-  return cosineSimilarity(queryEmbedding, descEmbedding);
+  return Math.max(0, Math.min(1, dotProduct / denominator));
 }
 
 /**
  * Calculate semantic similarity between a query and multiple descriptions.
- * More efficient than calling calculateSemanticSimilarity multiple times.
+ * Uses Cohere Embed v3 with separate input types for queries and documents.
  */
 export async function calculateSemanticSimilarities(
   query: string,
   descriptions: string[]
 ): Promise<number[]> {
-  const queryEmbedding = await encodeText(query);
-  const descEmbeddings = await encodeTexts(descriptions);
+  if (!process.env.COHERE_API_KEY) {
+    throw new Error(
+      'COHERE_API_KEY environment variable is not set. ' +
+      'Add it to .env.local for development or to Vercel environment variables for production.'
+    );
+  }
 
-  return descEmbeddings.map((descEmbedding) =>
-    cosineSimilarity(queryEmbedding, descEmbedding)
-  );
+  console.log(`[embeddings] Encoding query and ${descriptions.length} descriptions via Cohere...`);
+  console.time('[embeddings] cohere-embed');
+
+  // Encode query with search_query input type
+  const queryResponse = await cohere.v2.embed({
+    texts: [query],
+    model: 'embed-english-v3.0',
+    inputType: 'search_query',
+    embeddingTypes: ['float'],
+  });
+
+  const queryEmbedding = queryResponse.embeddings.float![0];
+
+  // Filter out empty descriptions and track their indices
+  const nonEmptyIndices: number[] = [];
+  const nonEmptyTexts: string[] = [];
+  descriptions.forEach((desc, i) => {
+    if (desc && desc.trim().length > 0) {
+      nonEmptyIndices.push(i);
+      nonEmptyTexts.push(desc);
+    }
+  });
+
+  // If all descriptions are empty, return zeros
+  if (nonEmptyTexts.length === 0) {
+    console.timeEnd('[embeddings] cohere-embed');
+    return descriptions.map(() => 0);
+  }
+
+  // Encode descriptions with search_document input type
+  const docResponse = await cohere.v2.embed({
+    texts: nonEmptyTexts,
+    model: 'embed-english-v3.0',
+    inputType: 'search_document',
+    embeddingTypes: ['float'],
+  });
+
+  const docEmbeddings = docResponse.embeddings.float!;
+
+  console.timeEnd('[embeddings] cohere-embed');
+
+  // Map back to original indices, filling empty descriptions with 0
+  const similarities = new Array(descriptions.length).fill(0);
+  nonEmptyIndices.forEach((originalIndex, embeddingIndex) => {
+    similarities[originalIndex] = cosineSimilarity(queryEmbedding, docEmbeddings[embeddingIndex]);
+  });
+
+  return similarities;
 }

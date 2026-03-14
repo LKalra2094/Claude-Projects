@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    addClickEvent({
+    await addClickEvent({
       queryId,
       videoId,
       clickedRank,

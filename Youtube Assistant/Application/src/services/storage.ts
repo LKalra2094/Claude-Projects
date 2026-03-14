@@ -1,45 +1,10 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import pool from '@/lib/db';
 import {
-  StorageData,
   QueryHistoryEntry,
   FeedbackEntry,
   ClickEvent,
   QuotaLogEntry,
 } from '@/types';
-
-const STORAGE_PATH = join(process.cwd(), 'src', 'data', 'storage.json');
-
-const EMPTY_STORAGE: StorageData = {
-  queryHistory: [],
-  feedback: [],
-  clickEvents: [],
-  quotaLog: [],
-};
-
-/**
- * Read storage data from JSON file.
- * Returns empty storage if file doesn't exist.
- */
-export function readStorage(): StorageData {
-  if (!existsSync(STORAGE_PATH)) {
-    return { ...EMPTY_STORAGE };
-  }
-
-  try {
-    const content = readFileSync(STORAGE_PATH, 'utf-8');
-    return JSON.parse(content) as StorageData;
-  } catch {
-    return { ...EMPTY_STORAGE };
-  }
-}
-
-/**
- * Write storage data to JSON file.
- */
-export function writeStorage(data: StorageData): void {
-  writeFileSync(STORAGE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
 
 /**
  * Generate a random query ID.
@@ -56,76 +21,104 @@ export function generateQueryId(): string {
 /**
  * Add a query history entry.
  */
-export function addQueryHistory(entry: QueryHistoryEntry): void {
-  const data = readStorage();
-  data.queryHistory.push(entry);
-  writeStorage(data);
+export async function addQueryHistory(entry: QueryHistoryEntry): Promise<void> {
+  await pool.query(
+    `INSERT INTO query_history (query_id, query, executed_at, result_count, top_videos)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [entry.queryId, entry.query, entry.executedAt, entry.resultCount, entry.topVideos]
+  );
 }
 
 /**
  * Add a feedback entry.
  * Feedback is append-only; most recent per queryId+videoId is authoritative.
  */
-export function addFeedback(entry: FeedbackEntry): void {
-  const data = readStorage();
-  data.feedback.push(entry);
-  writeStorage(data);
+export async function addFeedback(entry: FeedbackEntry): Promise<void> {
+  await pool.query(
+    `INSERT INTO feedback (query_id, video_id, feedback, composite_score, raw_signals, feedback_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      entry.queryId,
+      entry.videoId,
+      entry.feedback,
+      entry.compositeScore,
+      JSON.stringify(entry.rawSignals),
+      entry.feedbackAt,
+    ]
+  );
 }
 
 /**
  * Get the most recent feedback for a query+video pair.
  */
-export function getLatestFeedback(
+export async function getLatestFeedback(
   queryId: string,
   videoId: string
-): FeedbackEntry | undefined {
-  const data = readStorage();
-  const matches = data.feedback.filter(
-    (f) => f.queryId === queryId && f.videoId === videoId
+): Promise<FeedbackEntry | undefined> {
+  const result = await pool.query(
+    `SELECT query_id, video_id, feedback, composite_score, raw_signals, feedback_at
+     FROM feedback
+     WHERE query_id = $1 AND video_id = $2
+     ORDER BY feedback_at DESC
+     LIMIT 1`,
+    [queryId, videoId]
   );
-  return matches.length > 0 ? matches[matches.length - 1] : undefined;
+
+  if (result.rows.length === 0) return undefined;
+
+  const row = result.rows[0];
+  return {
+    queryId: row.query_id,
+    videoId: row.video_id,
+    feedback: row.feedback,
+    compositeScore: row.composite_score,
+    rawSignals: row.raw_signals,
+    feedbackAt: row.feedback_at instanceof Date
+      ? row.feedback_at.toISOString()
+      : row.feedback_at,
+  };
 }
 
 /**
  * Add a click event.
  */
-export function addClickEvent(event: ClickEvent): void {
-  const data = readStorage();
-  data.clickEvents.push(event);
-  writeStorage(data);
-}
-
-/**
- * Get today's date as YYYY-MM-DD string.
- */
-function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+export async function addClickEvent(event: ClickEvent): Promise<void> {
+  await pool.query(
+    `INSERT INTO click_events (query_id, video_id, clicked_rank, clicked_at)
+     VALUES ($1, $2, $3, $4)`,
+    [event.queryId, event.videoId, event.clickedRank, event.clickedAt]
+  );
 }
 
 /**
  * Increment quota usage for today.
+ * Uses atomic upsert — no race conditions.
  */
-export function incrementQuota(units: number): void {
-  const data = readStorage();
-  const today = getTodayString();
-
-  const todayEntry = data.quotaLog.find((entry) => entry.date === today);
-  if (todayEntry) {
-    todayEntry.unitsUsed += units;
-  } else {
-    data.quotaLog.push({ date: today, unitsUsed: units });
-  }
-
-  writeStorage(data);
+export async function incrementQuota(units: number): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+  await pool.query(
+    `INSERT INTO quota_log (date, units_used) VALUES ($1, $2)
+     ON CONFLICT (date) DO UPDATE SET units_used = quota_log.units_used + EXCLUDED.units_used`,
+    [today, units]
+  );
 }
 
 /**
  * Get today's quota usage.
  */
-export function getTodayQuota(): QuotaLogEntry {
-  const data = readStorage();
-  const today = getTodayString();
+export async function getTodayQuota(): Promise<QuotaLogEntry> {
+  const today = new Date().toISOString().split('T')[0];
+  const result = await pool.query(
+    `SELECT date, units_used FROM quota_log WHERE date = $1`,
+    [today]
+  );
 
-  const todayEntry = data.quotaLog.find((entry) => entry.date === today);
-  return todayEntry || { date: today, unitsUsed: 0 };
+  if (result.rows.length === 0) return { date: today, unitsUsed: 0 };
+
+  return {
+    date: result.rows[0].date instanceof Date
+      ? result.rows[0].date.toISOString().split('T')[0]
+      : result.rows[0].date,
+    unitsUsed: result.rows[0].units_used,
+  };
 }

@@ -6,7 +6,7 @@ const DAILY_LIMIT = 10000;
 
 export async function GET() {
   try {
-    const todayQuota = getTodayQuota();
+    const todayQuota = await getTodayQuota();
 
     const response: QuotaResponse = {
       unitsUsedToday: todayQuota.unitsUsed,

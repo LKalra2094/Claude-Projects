@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readStorage } from '@/services/storage';
+import pool from '@/lib/db';
 import {
   AnalyticsPeriod,
   AnalyticsSummary,
@@ -12,7 +12,7 @@ import {
  */
 function getDateDaysAgo(days: number): string {
   const date = new Date();
-  date.setDate(date.getDate() - days);
+  date.setUTCDate(date.getUTCDate() - days);
   return date.toISOString().split('T')[0];
 }
 
@@ -35,7 +35,7 @@ function periodToDays(period: AnalyticsPeriod): number | null {
     case '90d':
       return 90;
     case 'all':
-      return null; // No limit
+      return null;
     default:
       return 7;
   }
@@ -46,22 +46,15 @@ function periodToDays(period: AnalyticsPeriod): number | null {
  */
 function getDateRange(startDate: string, endDate: string): string[] {
   const dates: string[] = [];
-  const current = new Date(startDate);
-  const end = new Date(endDate);
+  const current = new Date(startDate + 'T00:00:00Z');
+  const end = new Date(endDate + 'T00:00:00Z');
 
   while (current <= end) {
     dates.push(current.toISOString().split('T')[0]);
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return dates;
-}
-
-/**
- * Extract date from ISO timestamp.
- */
-function extractDate(isoTimestamp: string): string {
-  return isoTimestamp.split('T')[0];
 }
 
 export async function GET(request: NextRequest) {
@@ -77,7 +70,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const data = readStorage();
     const today = getTodayString();
     const days = periodToDays(period);
 
@@ -85,52 +77,69 @@ export async function GET(request: NextRequest) {
     let startDate: string;
     if (days === null) {
       // "all" - find earliest date in data
-      const allDates = [
-        ...data.queryHistory.map((q) => extractDate(q.executedAt)),
-        ...data.quotaLog.map((q) => q.date),
-      ];
-      startDate = allDates.length > 0 ? allDates.sort()[0] : today;
+      const earliestResult = await pool.query(
+        `SELECT MIN(executed_at)::date AS earliest FROM query_history`
+      );
+      const earliest = earliestResult.rows[0]?.earliest;
+      startDate = earliest
+        ? (earliest instanceof Date ? earliest.toISOString().split('T')[0] : earliest)
+        : today;
     } else {
-      startDate = getDateDaysAgo(days - 1); // -1 because we include today
+      startDate = getDateDaysAgo(days - 1);
     }
 
-    // Filter data by period
-    const filteredQueries = data.queryHistory.filter((q) => {
-      const date = extractDate(q.executedAt);
-      return date >= startDate && date <= today;
-    });
+    // Query 1: Queries in date range
+    const queriesResult = await pool.query(
+      `SELECT query_id, executed_at::date AS date
+       FROM query_history
+       WHERE executed_at::date >= $1 AND executed_at::date <= $2`,
+      [startDate, today]
+    );
 
-    const filteredFeedback = data.feedback.filter((f) => {
-      const date = extractDate(f.feedbackAt);
-      return date >= startDate && date <= today;
-    });
+    // Query 2: Latest feedback per (query_id, video_id)
+    const feedbackResult = await pool.query(
+      `SELECT DISTINCT ON (query_id, video_id)
+         query_id, video_id, feedback
+       FROM feedback
+       WHERE feedback_at::date >= $1 AND feedback_at::date <= $2
+       ORDER BY query_id, video_id, feedback_at DESC`,
+      [startDate, today]
+    );
 
-    const filteredClicks = data.clickEvents.filter((c) => {
-      const date = extractDate(c.clickedAt);
-      return date >= startDate && date <= today;
-    });
+    // Query 3: Click counts per query
+    const clicksResult = await pool.query(
+      `SELECT query_id, COUNT(*)::integer AS click_count
+       FROM click_events
+       WHERE clicked_at::date >= $1 AND clicked_at::date <= $2
+       GROUP BY query_id`,
+      [startDate, today]
+    );
 
-    const filteredQuota = data.quotaLog.filter((q) => {
-      return q.date >= startDate && q.date <= today;
-    });
+    // Query 4: Quota log
+    const quotaResult = await pool.query(
+      `SELECT date, units_used
+       FROM quota_log
+       WHERE date >= $1 AND date <= $2`,
+      [startDate, today]
+    );
 
-    // Build query ID to date map
-    const queryIdToDate = new Map<string, string>();
-    filteredQueries.forEach((q) => {
-      queryIdToDate.set(q.queryId, extractDate(q.executedAt));
-    });
+    // Build data structures from query results
+    const filteredQueries = queriesResult.rows.map((row) => ({
+      queryId: row.query_id as string,
+      date: row.date instanceof Date ? row.date.toISOString().split('T')[0] : row.date as string,
+    }));
 
     // Build click counts per queryId
     const clicksPerQuery = new Map<string, number>();
-    filteredClicks.forEach((c) => {
-      clicksPerQuery.set(c.queryId, (clicksPerQuery.get(c.queryId) || 0) + 1);
+    clicksResult.rows.forEach((row) => {
+      clicksPerQuery.set(row.query_id, row.click_count);
     });
 
     // Build latest feedback per queryId+videoId
     const feedbackByQueryVideo = new Map<string, 'thumbs_up' | 'thumbs_down' | 'none'>();
-    filteredFeedback.forEach((f) => {
-      const key = `${f.queryId}:${f.videoId}`;
-      feedbackByQueryVideo.set(key, f.feedback);
+    feedbackResult.rows.forEach((row) => {
+      const key = `${row.query_id}:${row.video_id}`;
+      feedbackByQueryVideo.set(key, row.feedback);
     });
 
     // Count thumbs up/down per queryId
@@ -150,18 +159,20 @@ export async function GET(request: NextRequest) {
     const dateRange = getDateRange(startDate, today);
 
     // Pre-compute per-date aggregations
-    const queriesByDate = new Map<string, string[]>(); // date -> queryIds
+    const queriesByDate = new Map<string, string[]>();
     filteredQueries.forEach((q) => {
-      const date = extractDate(q.executedAt);
-      if (!queriesByDate.has(date)) {
-        queriesByDate.set(date, []);
+      if (!queriesByDate.has(q.date)) {
+        queriesByDate.set(q.date, []);
       }
-      queriesByDate.get(date)!.push(q.queryId);
+      queriesByDate.get(q.date)!.push(q.queryId);
     });
 
     const quotaByDate = new Map<string, number>();
-    filteredQuota.forEach((q) => {
-      quotaByDate.set(q.date, q.unitsUsed);
+    quotaResult.rows.forEach((row) => {
+      const dateStr = row.date instanceof Date
+        ? row.date.toISOString().split('T')[0]
+        : row.date;
+      quotaByDate.set(dateStr, row.units_used);
     });
 
     // Build time series
@@ -169,11 +180,9 @@ export async function GET(request: NextRequest) {
       const queryIds = queriesByDate.get(date) || [];
       const searches = queryIds.length;
 
-      // Null searches = searches with 0 clicks
       const nullSearches = queryIds.filter((qid) => !clicksPerQuery.has(qid)).length;
       const nullSearchPercent = searches > 0 ? (nullSearches / searches) * 100 : 0;
 
-      // Thumbs up/down per search
       const totalThumbsUp = queryIds.reduce(
         (sum, qid) => sum + (thumbsUpPerQuery.get(qid) || 0),
         0
@@ -185,14 +194,12 @@ export async function GET(request: NextRequest) {
       const thumbsUpPerSearch = searches > 0 ? totalThumbsUp / searches : 0;
       const thumbsDownPerSearch = searches > 0 ? totalThumbsDown / searches : 0;
 
-      // Clicks per search
       const totalClicks = queryIds.reduce(
         (sum, qid) => sum + (clicksPerQuery.get(qid) || 0),
         0
       );
       const clicksPerSearch = searches > 0 ? totalClicks / searches : 0;
 
-      // API units
       const apiUnits = quotaByDate.get(date) || 0;
 
       return {
@@ -208,7 +215,6 @@ export async function GET(request: NextRequest) {
 
     // Calculate summary (averages across period)
     const totalDays = timeSeries.length;
-    const daysWithSearches = timeSeries.filter((d) => d.searches > 0).length;
 
     const totalSearches = timeSeries.reduce((sum, d) => sum + d.searches, 0);
     const totalNullSearches = filteredQueries.filter(

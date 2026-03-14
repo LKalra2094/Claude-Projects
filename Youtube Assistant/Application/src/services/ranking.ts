@@ -136,8 +136,16 @@ export async function rankVideos(
   channelMap: Map<string, YouTubeChannelDetails>,
   query: string
 ): Promise<RankedVideo[]> {
-  // Step 1: Compute semantic similarities for all video descriptions in one batch
-  const descriptions = videos.map((video) => video.snippet.description);
+  // Step 1: Compute semantic similarities using title + description + tags
+  const descriptions = videos.map((video) =>
+    [
+      video.snippet.title,
+      video.snippet.description,
+      (video.snippet.tags || []).join(' '),
+    ]
+      .filter(Boolean)
+      .join(' ')
+  );
   const similarities = await calculateSemanticSimilarities(query, descriptions);
 
   // Step 2: Extract raw signals for all videos (using pre-computed similarities)

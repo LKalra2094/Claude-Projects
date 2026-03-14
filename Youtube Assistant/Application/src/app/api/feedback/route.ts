@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    addFeedback({
+    await addFeedback({
       queryId,
       videoId,
       feedback,
