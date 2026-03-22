@@ -53,16 +53,15 @@ live inside that folder.
 
 ```
 project-name/
-├── Claude.md                          # Project context, reading order, iterations list
+├── Claude.md                          # Project context, reading order, sprints list
 ├── Session Status.md                  # What happened last, what to do next
-├── Backlog.md                         # Prioritized planned work
-├── Changelog.md                       # All shipped work, grouped by iteration
-├── Iteration N - Implementation Plan.md   # One per iteration (1, 2, 3…)
+├── Product Backlog.md                 # All planned + completed work, tracked by sprint
+├── Sprint N - Implementation Plan.md  # One per sprint (1, 2, 3…)
 ├── Product Requirements/
 │   ├── Project Name - Product Brief.md        # The WHY: problem, audience, goals
 │   ├── Project Name - Product Requirements Document.md  # The WHAT: user stories, requirements
 │   └── Wireframes/
-│       ├── Iteration N - Wireframes.md        # Visual layout per iteration
+│       ├── Sprint N - Wireframes.md           # Visual layout per sprint
 │       └── Wireframe Tracker.md               # Status of all wireframes
 └── Application/                       # All source code lives here
     └── ...
@@ -76,14 +75,12 @@ project-name/
 2. **Project location rule** — All files stay inside the project folder.
 3. **Context reading order** — Numbered list of files to read when starting a session (Session Status first, then Claude.md, then Product Brief, PRD, Wireframes).
 4. **Session handoff protocol** — Before ending a session, update `Session Status.md` with what was done, what changed, next steps, and key decisions.
-5. **Iterations list** — Running list of all iteration plans with status (In Progress / Closed).
-6. **Reference section** — Pointers to Backlog, Changelog, and Wireframe Tracker.
+5. **Sprints list** — Running list of all sprint plans with status (In Progress / Closed).
+6. **Reference section** — Pointers to Product Backlog and Wireframe Tracker.
 
 **Session Status.md** — Acts as the handoff between sessions. Always read first. Updated at the end of every session with what was done, what files changed, next steps, and key decisions.
 
-**Backlog.md** — Prioritized list of upcoming work. Items move to Changelog when shipped.
-
-**Changelog.md** — Record of all shipped work, grouped by iteration. Updated during Ship + Clean Up.
+**Product Backlog.md** — Single source of truth for all work items — planned, in progress, and completed. Tracks priority, status, user journey phase, and which sprint shipped each item.
 
 ---
 
@@ -118,30 +115,29 @@ Set up docs in this order. Each step builds on the previous one.
 2. **Product Requirements Document** (`Product Requirements/Project Name - Product Requirements Document.md`) — The WHAT: user stories, functional requirements, technical requirements, constraints. Derived from the approved brief. Use `Product_Requirements_Template.md` in the root directory as the template.
 3. **Wireframes** (`Product Requirements/Wireframes/`) — Visual layout for the UI. Create `Wireframe Tracker.md` and iteration-specific wireframe docs as needed. Skip if the project has no UI.
 4. **Claude.md** — Project context, reading order, iterations list. Created after the product requirements are defined, since it references them.
-5. **Backlog.md** — Prioritized list of all planned work, derived from the PRD. This is where iteration scope gets pulled from.
-6. **Changelog.md** — Empty to start. Will be filled as iterations ship.
-7. **Session Status.md** — Initialize with what was set up and what comes next.
+5. **Product Backlog.md** — All work items derived from the PRD. This is where sprint scope gets pulled from. Use `Product_Backlog_Template.md` in the root directory as the template.
+6. **Session Status.md** — Initialize with what was set up and what comes next. Use `Session_Status_Template.md` in the root directory as the template.
 
 **All Phase 1 docs are committed directly to main.** No branches, no PRs.
 
-### Phase 2: Iteration Cycle (repeats for each iteration)
+### Phase 2: Sprint Cycle (repeats for each sprint)
 
-Once the foundation is in place, work happens in iterations. Each iteration follows the Development Workflow below.
+Once the foundation is in place, work happens in sprints. Each sprint follows the Development Workflow below.
 
 ---
 
 ## Worktree Safety Rule
 
-At the start of every session, check if you are inside a worktree (`git worktree list`). If the current task is documentation (plans, session status, changelog, backlog, CLAUDE.md, or any non-code file), **exit the worktree and work directly on main.** Worktrees are only for source code during the Build phase.
+At the start of every session, check if you are inside a worktree (`git worktree list`). If the current task is documentation (plans, session status, product backlog, CLAUDE.md, or any non-code file), **exit the worktree and work directly on main.** Worktrees are only for source code during the Build phase.
 
 ---
 
 ## Development Workflow
 
-Every iteration follows this process. There are two gates where Claude must stop and wait for user approval. Everything else runs autonomously.
+Every sprint follows this process. There are two gates where Claude must stop and wait for user approval. Everything else runs autonomously.
 
 ### 1. Plan
-1. Create `Iteration N - Implementation Plan.md` (Status: In Progress) with scope, problem, changes, and files affected.
+1. Create `Sprint N - Implementation Plan.md` (Status: In Progress) with scope, problem, changes, and files affected.
    - **Commit this directly to main** — implementation plans are docs, not code.
 
 **GATE 1 — Stop and wait for user approval before coding.**
@@ -149,7 +145,7 @@ Every iteration follows this process. There are two gates where Claude must stop
 ### 2. Build
 2. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
 3. Implement all code changes inside the worktree directory.
-   - **Only source code goes in worktrees.** Documentation (plans, session status, changelog, backlog) is always committed directly to main.
+   - **Only source code goes in worktrees.** Documentation (plans, session status, product backlog) is always committed directly to main.
 4. Commit and push the worktree branch: `git push -u origin <branch-name>`
 
 ### 3. Test
@@ -163,5 +159,5 @@ Every iteration follows this process. There are two gates where Claude must stop
 8. Pull main: `git pull origin main`
 9. Remove the worktree: `git worktree remove .worktrees/<name>` (use `--force` if needed)
 10. Delete the remote branch if not auto-deleted: `git push origin --delete <branch-name>`
-11. Mark the iteration plan as Status: Closed. Update Iterations list in project Claude.md and `Changelog.md`.
+11. Mark the sprint plan as Status: Closed. Update Sprints list in project Claude.md. Update shipped items in `Product Backlog.md` (Status → Done, Shipped In → Sprint N).
 12. Commit and push doc updates directly to main.
