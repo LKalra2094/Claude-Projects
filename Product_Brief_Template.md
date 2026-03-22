@@ -57,7 +57,7 @@ A well-defined audience helps you make scope decisions later. If you can't say w
 
 ---
 
-## Goal
+## Goals
 
 <!--
 What does success look like? Split into qualitative (how it should feel) and quantitative (what we can measure).
@@ -97,17 +97,3 @@ A table works well here: what we're not doing in one column, why in the other.
 | [Platform or audience expansion] | [Why narrowing focus produces a better V1] |
 | [Nice-to-have that can come later] | [Why it's not needed to validate the core hypothesis] |
 
----
-
-## Emerging Hypotheses
-
-<!--
-OPTIONAL. Early thinking about how the solution might work. This is not a spec — it's directional intuition about the solution shape, technical approach, or UX model.
-
-Include this if you have informed opinions about the approach. It helps downstream work (PRD, wireframes) start from a stronger foundation. But keep it light — these are hypotheses to validate, not commitments.
--->
-
-- [Hypothesis about the solution architecture or approach]
-- [Hypothesis about the user experience model]
-- [Hypothesis about technical feasibility or cost]
-- [Hypothesis about what makes this tractable now vs. before]
