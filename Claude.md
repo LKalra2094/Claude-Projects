@@ -92,9 +92,15 @@ project-name/
 When the user describes a new project, **automatically** do the following without being asked:
 
 1. Create the project folder (lowercase, hyphenated) in the root directory.
-2. Create a `Product Requirements/` subfolder inside it.
-3. Write the Product Brief (`Product Requirements/Project Name - Product Brief.md`) using `Product_Brief_Template.md` in the root directory as the template.
-4. **Stop and wait for user approval** on the Product Brief before doing anything else.
+2. Initialize it as its own git repo: `git init` inside the project folder.
+3. Create a `Product Requirements/` subfolder inside it.
+4. Write the Product Brief (`Product Requirements/Project Name - Product Brief.md`) using `Product_Brief_Template.md` in the root directory as the template.
+5. **Stop and wait for user approval** on the Product Brief before doing anything else.
+
+After the user approves the Product Brief, create a GitHub repo and push:
+- `gh repo create <github-username>/<project-name> --public --description "<one-line description>" --source . --push`
+
+**Each project is its own git repo and its own GitHub repo.** The root directory (`Claude Projects/`) is a separate repo that holds only shared files (CLAUDE.md, templates). Project folders are listed in the root `.gitignore` so they are never tracked by the root repo.
 
 Do not create any other files, folders, or scaffolding at this stage. Everything else is built iteratively after the brief is approved.
 
@@ -109,7 +115,7 @@ This is the full lifecycle for any project, from zero to shipped. Follow these p
 Set up docs in this order. Each step builds on the previous one.
 
 1. **Product Brief** (`Product Requirements/Project Name - Product Brief.md`) — The WHY: problem statement, target audience, goals, success criteria. Created automatically when the project starts (see above). Must be approved before continuing.
-2. **Product Requirements Document** (`Product Requirements/Project Name - Product Requirements Document.md`) — The WHAT: user stories, functional requirements, technical requirements, constraints. Derived from the approved brief. Use `PRD_writing_instructions.md` as the guide.
+2. **Product Requirements Document** (`Product Requirements/Project Name - Product Requirements Document.md`) — The WHAT: user stories, functional requirements, technical requirements, constraints. Derived from the approved brief. Use `Product_Requirements_Template.md` in the root directory as the template.
 3. **Wireframes** (`Product Requirements/Wireframes/`) — Visual layout for the UI. Create `Wireframe Tracker.md` and iteration-specific wireframe docs as needed. Skip if the project has no UI.
 4. **Claude.md** — Project context, reading order, iterations list. Created after the product requirements are defined, since it references them.
 5. **Backlog.md** — Prioritized list of all planned work, derived from the PRD. This is where iteration scope gets pulled from.
