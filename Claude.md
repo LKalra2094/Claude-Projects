@@ -93,7 +93,7 @@ When the user describes a new project, **automatically** do the following withou
 
 1. Create the project folder (lowercase, hyphenated) in the root directory.
 2. Create a `Product Requirements/` subfolder inside it.
-3. Write the Product Brief (`Product Requirements/Project Name - Product Brief.md`) using `PRD_writing_instructions.md` in the root directory as the guide.
+3. Write the Product Brief (`Product Requirements/Project Name - Product Brief.md`) using `Product_Brief_Template.md` in the root directory as the template.
 4. **Stop and wait for user approval** on the Product Brief before doing anything else.
 
 Do not create any other files, folders, or scaffolding at this stage. Everything else is built iteratively after the brief is approved.
