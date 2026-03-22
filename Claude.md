@@ -49,8 +49,7 @@ Every new document should start with this header:
 
 Each project lives in its own folder under `Claude Projects/`.
 All project-specific files, docs, code, and git history
-live inside that folder. When starting a new project,
-create the following structure:
+live inside that folder.
 
 ```
 project-name/
@@ -69,9 +68,9 @@ project-name/
     └── ...
 ```
 
-### Project Claude.md
+### File Descriptions
 
-Every project's `Claude.md` must include:
+**Project Claude.md** — Every project's `Claude.md` must include:
 
 1. **Role context** — What this project is, who the user is in relation to it.
 2. **Project location rule** — All files stay inside the project folder.
@@ -80,30 +79,60 @@ Every project's `Claude.md` must include:
 5. **Iterations list** — Running list of all iteration plans with status (In Progress / Closed).
 6. **Reference section** — Pointers to Backlog, Changelog, and Wireframe Tracker.
 
-### Session Status.md
+**Session Status.md** — Acts as the handoff between sessions. Always read first. Updated at the end of every session with what was done, what files changed, next steps, and key decisions.
 
-Acts as the handoff between sessions. Always read first.
-Updated at the end of every session with:
-- What was done
-- What files were created or changed
-- What the next steps are
-- Key decisions made
+**Backlog.md** — Prioritized list of upcoming work. Items move to Changelog when shipped.
 
-### Backlog.md
+**Changelog.md** — Record of all shipped work, grouped by iteration. Updated during Ship + Clean Up.
 
-Prioritized list of upcoming work. Items move to
-Changelog.md when shipped as part of an iteration.
+---
 
-### Changelog.md
+## Starting a New Project
 
-Record of all shipped work, grouped by iteration.
-Updated during the Ship + Clean Up phase.
+When the user describes a new project, **automatically** do the following without being asked:
+
+1. Create the project folder (lowercase, hyphenated) in the root directory.
+2. Create a `Product Requirements/` subfolder inside it.
+3. Write the Product Brief (`Product Requirements/Project Name - Product Brief.md`) using `PRD_writing_instructions.md` in the root directory as the guide.
+4. **Stop and wait for user approval** on the Product Brief before doing anything else.
+
+Do not create any other files, folders, or scaffolding at this stage. Everything else is built iteratively after the brief is approved.
+
+---
+
+## Project Execution Order
+
+This is the full lifecycle for any project, from zero to shipped. Follow these phases in order. Do not skip ahead.
+
+### Phase 1: Foundation (docs, no code)
+
+Set up docs in this order. Each step builds on the previous one.
+
+1. **Product Brief** (`Product Requirements/Project Name - Product Brief.md`) — The WHY: problem statement, target audience, goals, success criteria. Created automatically when the project starts (see above). Must be approved before continuing.
+2. **Product Requirements Document** (`Product Requirements/Project Name - Product Requirements Document.md`) — The WHAT: user stories, functional requirements, technical requirements, constraints. Derived from the approved brief. Use `PRD_writing_instructions.md` as the guide.
+3. **Wireframes** (`Product Requirements/Wireframes/`) — Visual layout for the UI. Create `Wireframe Tracker.md` and iteration-specific wireframe docs as needed. Skip if the project has no UI.
+4. **Claude.md** — Project context, reading order, iterations list. Created after the product requirements are defined, since it references them.
+5. **Backlog.md** — Prioritized list of all planned work, derived from the PRD. This is where iteration scope gets pulled from.
+6. **Changelog.md** — Empty to start. Will be filled as iterations ship.
+7. **Session Status.md** — Initialize with what was set up and what comes next.
+
+**All Phase 1 docs are committed directly to main.** No branches, no PRs.
+
+### Phase 2: Iteration Cycle (repeats for each iteration)
+
+Once the foundation is in place, work happens in iterations. Each iteration follows the Development Workflow below.
+
+---
+
+## Worktree Safety Rule
+
+At the start of every session, check if you are inside a worktree (`git worktree list`). If the current task is documentation (plans, session status, changelog, backlog, CLAUDE.md, or any non-code file), **exit the worktree and work directly on main.** Worktrees are only for source code during the Build phase.
 
 ---
 
 ## Development Workflow
 
-Every feature or fix follows this process. There are two gates where Claude must stop and wait for user approval. Everything else runs autonomously.
+Every iteration follows this process. There are two gates where Claude must stop and wait for user approval. Everything else runs autonomously.
 
 ### 1. Plan
 1. Create `Iteration N - Implementation Plan.md` (Status: In Progress) with scope, problem, changes, and files affected.
