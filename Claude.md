@@ -45,6 +45,23 @@ Every new document should start with this header:
 
 ---
 
+## Session Protocols
+
+### Start of Session
+
+1. Read project `CLAUDE.md` for context, role, and reading order.
+2. Read `Session Status.md` to understand where we left off.
+3. Check worktree status (`git worktree list`) — if in a worktree and doing docs, exit to main.
+4. Read whatever files are relevant based on the current task.
+
+### End of Session
+
+1. Update `Session Status.md` with what was done, next steps, and key decisions.
+2. Commit all uncommitted work to git.
+3. Push to GitHub so changes are backed up.
+
+---
+
 ## Project Structure
 
 Each project lives in its own folder under `Claude Projects/`.
@@ -73,8 +90,8 @@ Every project's `Claude.md` must include:
 
 1. **Role context** — What this project is, who the user is in relation to it.
 2. **Project location rule** — All files stay inside the project folder.
-3. **Context reading order** — Numbered list of files to read when starting a session (Session Status first, then Claude.md, then Product Brief, PRD, then current sprint's Technical Spec and Design Doc).
-4. **Session handoff protocol** — Before ending a session, update `Session Status.md` with what was done, next steps, and key decisions.
+3. **Context reading order** — Numbered list of files to read when starting a session (Claude.md first, then Session Status, then Product Brief, PRD, then current sprint's Technical Spec and Design Doc).
+4. **Session protocols** — Follow the Start/End of Session protocols defined in the root CLAUDE.md.
 5. **Sprints list** — Running list of all sprints with status (In Progress / Closed).
 6. **Reference section** — Pointer to Product Backlog.
 
