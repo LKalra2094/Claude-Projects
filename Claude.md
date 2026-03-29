@@ -26,6 +26,14 @@ Add auth and session management
 
 ---
 
+## Anti-Sycophancy Protocol
+
+- Do not reverse a correct position because the user pushes back. Hold unless they provide new evidence. If you change your mind, state what changed it.
+- When assessing work or ideas, be critically honest. No grade inflation.
+- If uncertain, say so. Do not fabricate confidence.
+
+---
+
 ## Document Format
 
 Every new document should start with this header:
@@ -51,14 +59,16 @@ Every new document should start with this header:
 
 1. Read project `CLAUDE.md` for context, role, and reading order.
 2. Read `Session Status.md` to understand where we left off.
-3. Check worktree status (`git worktree list`) — if in a worktree and doing docs, exit to main.
+3. Check worktree status (`git worktree list`). If already in a worktree, continue working there. If not, create one when work begins.
 4. Read whatever files are relevant based on the current task.
+5. Do not proceed with any task — just build context, show the user what the next steps are in the session status file and wait for instructions.
 
 ### End of Session
 
-1. Update `Session Status.md` with what was done, next steps, and key decisions.
-2. Commit all uncommitted work to git.
-3. Push to GitHub so changes are backed up.
+1. Update `Session Status.md` with what was done.
+2. Confirm next steps and key decisions with user before editing `Session Status.md`.
+3. Commit all uncommitted work, push the branch, and create or update the PR.
+4. Merge if approved, otherwise leave the PR open for next session.
 
 ---
 
@@ -120,7 +130,7 @@ After the user approves the Product Brief:
 10. Create **Product Backlog.md** with all work items derived from the PRD. Use `Product_Backlog_Template.md` as the template.
 11. Update `Session Status.md` and `Claude.md` to reflect completed foundation work.
 
-**All Phase 1 docs are committed directly to main.** No branches, no PRs.
+**All Phase 1 docs use a worktree, PR, and merge — same as any other change.**
 
 ### Phase 2: Sprint Cycle (repeats for each sprint)
 
@@ -128,40 +138,34 @@ Once the foundation is in place, work happens in sprints. Each sprint follows th
 
 ---
 
-## Worktree Safety Rule
-
-At the start of every session, check if you are inside a worktree (`git worktree list`). If the current task is documentation (plans, session status, product backlog, CLAUDE.md, or any non-code file), **exit the worktree and work directly on main.** Worktrees are only for source code during the Build phase.
-
----
-
 ## Development Workflow
 
-Every sprint follows this process. There are two gates where Claude must stop and wait for user approval. Everything else runs autonomously.
+All changes — code and documentation — go through a worktree, PR, and merge. Every sprint follows this process. There are two gates where Claude must stop and wait for user approval. Everything else runs autonomously.
 
 ### 1. Plan
-1. Create the `Sprint N/` folder with:
+1. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
+2. Create the `Sprint N/` folder with:
    - `Technical Spec.md` (Status: In Progress) — scope, problem, changes, and files affected.
    - `Design Doc.md` — layouts, flows, and interactions. Skip if the sprint has no UI changes.
-   - **Commit these directly to main** — sprint docs are not code.
+3. Commit, push, create PR, and merge.
 
 **GATE 1 — Stop and wait for user approval before coding.**
 
 ### 2. Build
-2. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
-3. Implement all code changes inside the worktree directory.
-   - **Only source code goes in worktrees.** Documentation (plans, session status, product backlog) is always committed directly to main.
-4. Commit and push the worktree branch: `git push -u origin <branch-name>`
+4. Create a worktree: `git worktree add -b <branch-name> .worktrees/<name> main`
+5. Implement all changes inside the worktree directory.
+6. Commit and push the worktree branch: `git push -u origin <branch-name>`
 
 ### 3. Test
-5. Create a PR: `gh pr create --title "..." --body "..."`
-6. User opens the Vercel preview URL (found in PR checks or Vercel dashboard) and verifies changes.
+7. Create a PR: `gh pr create --title "..." --body "..."`
+8. User opens the Vercel preview URL (found in PR checks or Vercel dashboard) and verifies changes.
 
 **GATE 2 — Stop and wait for user to confirm the PR looks good.**
 
 ### 4. Ship + Clean Up (autonomous after Gate 2)
-7. Merge the PR: `gh pr merge --squash --delete-branch`
-8. Pull main: `git pull origin main`
-9. Remove the worktree: `git worktree remove .worktrees/<name>` (use `--force` if needed)
-10. Delete the remote branch if not auto-deleted: `git push origin --delete <branch-name>`
-11. Mark the sprint's Technical Spec and other files as Status: Closed. Update Sprints list in project Claude.md. Update shipped items in `Product Backlog.md` (Status → Done, Shipped In → Sprint N).
-12. Commit and push doc updates directly to main.
+9. Merge the PR: `gh pr merge --squash --delete-branch`
+10. Pull main: `git pull origin main`
+11. Remove the worktree: `git worktree remove .worktrees/<name>` (use `--force` if needed)
+12. Delete the remote branch if not auto-deleted: `git push origin --delete <branch-name>`
+13. Mark the sprint's Technical Spec and other files as Status: Closed. Update Sprints list in project Claude.md. Update shipped items in `Product Backlog.md` (Status → Done, Shipped In → Sprint N).
+14. Commit doc updates via worktree + PR.
